@@ -2,6 +2,10 @@ name: Test coverage ✅
 
 on:
   pull_request:
+    branches:
+      - main
+      - develop
+      - 'releases/**'
 
 jobs:
   coverage:
