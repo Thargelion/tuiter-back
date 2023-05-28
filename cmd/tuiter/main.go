@@ -1,17 +1,21 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
 	"net/http"
+	"tuiter.com/api/kit"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		kit.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
-	_ = r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	err := http.ListenAndServe(":3000", r)
+	if err != nil {
+		return
+	}
 }
