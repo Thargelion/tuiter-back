@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"tuiter.com/api/rest"
 
@@ -12,8 +13,25 @@ type Router struct {
 	repo Repository
 }
 
+func (r *Router) FindUser(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "userName")
+	user, err := r.repo.FindUserByUsername(request.Context(), id)
+	if err != nil {
+		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
+		if err != nil {
+			return
+		}
+		return
+	}
+
+	err = render.Render(writer, request, &Payload{user})
+	if err != nil {
+		return
+	}
+}
+
 func (r *Router) CreateUser(writer http.ResponseWriter, request *http.Request) {
-	data := &Request{}
+	data := &Payload{}
 	if err := render.Bind(request, data); err != nil {
 		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
 		if err != nil {
@@ -41,14 +59,18 @@ func NewUserRouter(repository Repository) *Router {
 	return &Router{repository}
 }
 
-type Request struct {
+type Payload struct {
 	*User
 }
 
-func (u Request) Bind(r *http.Request) error {
+func (u *Payload) Bind(r *http.Request) error {
 	if u.User == nil {
 		return errors.New("missing required User fields")
 	}
 
+	return nil
+}
+
+func (u *Payload) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }

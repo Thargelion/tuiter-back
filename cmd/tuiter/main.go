@@ -22,9 +22,15 @@ func main() {
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		kit.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
-	r.Post("/users", userRouter.CreateUser)
+	r.Route("/v1", func(r chi.Router) {
+		r.Route("/users", func(r chi.Router) {
+			r.Post("/", userRouter.CreateUser)
+			if err != nil {
+				return
+			}
+
+			r.Get("/{userName}", userRouter.FindUser)
+		})
+	})
 	err = http.ListenAndServe(":3000", r)
-	if err != nil {
-		return
-	}
 }

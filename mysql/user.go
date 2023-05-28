@@ -2,23 +2,25 @@ package mysql
 
 import (
 	"context"
-	"tuiter.com/api/kit"
+	"gorm.io/gorm"
 	"tuiter.com/api/user"
 )
 
 type UserRepository struct {
-	creator kit.Creator
+	database *gorm.DB
 }
 
 func (r *UserRepository) FindUserByUsername(ctx context.Context, username string) (*user.User, error) {
-	return nil, nil
+	var res = &user.User{}
+	txResult := r.database.First(&res, "name = ?", username)
+	return res, txResult.Error
 }
 
 func (r *UserRepository) Create(ctx context.Context, user *user.User) error {
-	res := r.creator.Create(user)
+	res := r.database.Create(user)
 	return res.Error
 }
 
-func NewUserRepository(creator kit.Creator) *UserRepository {
-	return &UserRepository{creator: creator}
+func NewUserRepository(creator *gorm.DB) *UserRepository {
+	return &UserRepository{database: creator}
 }
