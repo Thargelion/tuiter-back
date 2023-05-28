@@ -21,8 +21,15 @@ func (r *Router) Search(writer http.ResponseWriter, request *http.Request) {
 	var query map[string]interface{}
 	queryValues := request.URL.Query()
 	err := decoder.Decode(&user, queryValues)
+	if err != nil {
+		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
+		if err != nil {
+			return
+		}
+		return
+	}
 	data, _ := json.Marshal(user)
-	json.Unmarshal(data, &query)
+	_ = json.Unmarshal(data, &query)
 	users, err := r.repo.Search(request.Context(), query)
 	if err != nil {
 		err := render.Render(writer, request, rest.ErrInvalidRequest(err))

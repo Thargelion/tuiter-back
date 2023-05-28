@@ -35,4 +35,8 @@ func main() {
 		})
 	})
 	err = http.ListenAndServe(":3000", r)
+
+	if err != nil {
+		panic(err)
+	}
 }
