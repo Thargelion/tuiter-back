@@ -7,12 +7,18 @@ import (
 )
 
 type UserRepository struct {
-	database kit.Dao
+	database kit.DatabaseActions
 }
 
-func (r *UserRepository) FindUserByUsername(ctx context.Context, username string) (*user.User, error) {
+func (r *UserRepository) Search(ctx context.Context, query map[string]interface{}) ([]*user.User, error) {
+	var res []*user.User
+	txResult := r.database.Search(&res, query)
+	return res, txResult.Error()
+}
+
+func (r *UserRepository) FindUserByKey(ctx context.Context, key string, value string) (*user.User, error) {
 	var res = &user.User{}
-	txResult := r.database.First(&res, "name = ?", username)
+	txResult := r.database.First(&res, "? = ?", key, value)
 	return res, txResult.Error()
 }
 
@@ -21,6 +27,6 @@ func (r *UserRepository) Create(ctx context.Context, user *user.User) error {
 	return res.Error()
 }
 
-func NewUserRepository(creator kit.Dao) *UserRepository {
+func NewUserRepository(creator kit.DatabaseActions) *UserRepository {
 	return &UserRepository{database: creator}
 }

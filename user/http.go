@@ -1,8 +1,10 @@
 package user
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/schema"
 	"net/http"
 	"tuiter.com/api/rest"
 
@@ -13,9 +15,32 @@ type Router struct {
 	repo Repository
 }
 
-func (r *Router) FindUser(writer http.ResponseWriter, request *http.Request) {
-	id := chi.URLParam(request, "userName")
-	user, err := r.repo.FindUserByUsername(request.Context(), id)
+func (r *Router) Search(writer http.ResponseWriter, request *http.Request) {
+	var user Filter
+	var decoder = schema.NewDecoder()
+	var query map[string]interface{}
+	queryValues := request.URL.Query()
+	err := decoder.Decode(&user, queryValues)
+	data, _ := json.Marshal(user)
+	json.Unmarshal(data, &query)
+	users, err := r.repo.Search(request.Context(), query)
+	if err != nil {
+		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
+		if err != nil {
+			return
+		}
+		return
+	}
+
+	err = render.RenderList(writer, request, newUserList(users))
+	if err != nil {
+		return
+	}
+}
+
+func (r *Router) FindUserByID(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "id")
+	user, err := r.repo.FindUserByKey(request.Context(), "id", id)
 	if err != nil {
 		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
 		if err != nil {
@@ -73,4 +98,19 @@ func (u *Payload) Bind(r *http.Request) error {
 
 func (u *Payload) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
+}
+
+func newUserList(users []*User) []render.Renderer {
+	var list []render.Renderer
+	list = []render.Renderer{}
+
+	for _, user := range users {
+		list = append(list, &Payload{user})
+	}
+
+	return list
+}
+
+type Filter struct {
+	Name *string `json:"name,omitempty"`
 }

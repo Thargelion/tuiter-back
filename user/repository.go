@@ -1,8 +1,11 @@
 package user
 
-import "context"
+import (
+	"context"
+)
 
 type Repository interface {
-	FindUserByUsername(ctx context.Context, username string) (*User, error)
+	FindUserByKey(ctx context.Context, key string, value string) (*User, error)
 	Create(ctx context.Context, user *User) error
+	Search(ctx context.Context, query map[string]interface{}) ([]*User, error)
 }

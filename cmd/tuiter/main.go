@@ -17,6 +17,7 @@ func main() {
 		panic("failed to migrate")
 	}
 	userRouter := user.NewUserRouter(mysql.NewUserRepository(db))
+	postRouter := post.NewPostRouter(mysql.NewPostRepository(db))
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -25,11 +26,12 @@ func main() {
 	r.Route("/v1", func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/", userRouter.CreateUser)
-			if err != nil {
-				return
-			}
-
-			r.Get("/{userName}", userRouter.FindUser)
+			r.Get("/{id}", userRouter.FindUserByID)
+			r.Get("/", userRouter.Search)
+		})
+		r.Route("/posts", func(r chi.Router) {
+			r.Get("/", postRouter.FindAll)
+			r.Post("/", postRouter.CreatePost)
 		})
 	})
 	err = http.ListenAndServe(":3000", r)

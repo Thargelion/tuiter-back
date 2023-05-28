@@ -16,7 +16,7 @@ type mockRepository struct {
 	mock.Mock
 }
 
-func (m *mockRepository) FindUserByUsername(ctx context.Context, username string) (*User, error) {
+func (m *mockRepository) FindUserByKey(ctx context.Context, username string) (*User, error) {
 	args := m.Called(username)
 	return args.Get(0).(*User), args.Error(1)
 }
@@ -45,10 +45,10 @@ func (suite *UserHttpSuite) TestRouterFindUserOK() {
 	chiContext.URLParams.Add("userName", "username")
 	request := suite.request.WithContext(context.WithValue(suite.request.Context(), chi.RouteCtxKey, chiContext))
 	expected := &User{}
-	suite.repo.On("FindUserByUsername", "username").Return(expected, nil)
+	suite.repo.On("FindUserByKey", "username").Return(expected, nil)
 	subject := NewUserRouter(suite.repo)
 	// When
-	subject.FindUser(suite.writer, request)
+	subject.FindUserByID(suite.writer, request)
 	// Then
 	suite.repo.AssertExpectations(suite.T())
 	res := suite.writer.Result()
@@ -60,10 +60,10 @@ func (suite *UserHttpSuite) TestRouterFindUserNotFound() {
 	chiContext := chi.NewRouteContext()
 	chiContext.URLParams.Add("userName", "username")
 	request := suite.request.WithContext(context.WithValue(suite.request.Context(), chi.RouteCtxKey, chiContext))
-	suite.repo.On("FindUserByUsername", "username").Return(&User{}, errors.New("x.x"))
+	suite.repo.On("FindUserByKey", "username").Return(&User{}, errors.New("x.x"))
 	subject := NewUserRouter(suite.repo)
 	// When
-	subject.FindUser(suite.writer, request)
+	subject.FindUserByID(suite.writer, request)
 	// Then
 	suite.repo.AssertExpectations(suite.T())
 	res := suite.writer.Result()
