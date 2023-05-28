@@ -21,3 +21,6 @@
 go.work
 
 .idea
+
+# DDBB Local Volume
+database_DATA
