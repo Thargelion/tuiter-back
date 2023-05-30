@@ -47,7 +47,7 @@ type PageKey string
 
 const (
 	// PageIDKey refers to the context key that stores the next page id
-	PageIDKey PageKey = "page_id"
+	PageIDKey = PageKey("page_id")
 )
 
 // Pagination Thanks to https://github.com/jonnylangefeld/go-api/blob/v1.0.0/pkg/middelware/pagination.go !
@@ -60,11 +60,11 @@ func Pagination(next http.Handler) http.Handler {
 		if PageID != "" {
 			intPageID, err = strconv.Atoi(PageID)
 			if err != nil {
-				_ = render.Render(w, r, rest.ErrInvalidRequest(fmt.Errorf("couldn't read %s: %w", string(PageIDKey), err)))
+				_ = render.Render(w, r, rest.ErrInvalidRequest(fmt.Errorf("couldn't read %s: %w", PageIDKey, err)))
 				return
 			}
 		}
-		ctx := context.WithValue(r.Context(), string(PageIDKey), intPageID)
+		ctx := context.WithValue(r.Context(), PageIDKey, intPageID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

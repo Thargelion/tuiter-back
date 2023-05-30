@@ -21,7 +21,7 @@ func NewPostRouter(time kit.Time, repository Repository) *Router {
 }
 
 func (r *Router) FindAll(writer http.ResponseWriter, request *http.Request) {
-	pageID := request.URL.Query().Get(kit.PageIDKey)
+	pageID := request.URL.Query().Get(string(kit.PageIDKey))
 	posts, err := r.repo.FindAll(request.Context(), pageID)
 	if err != nil {
 		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
