@@ -6,12 +6,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/schema"
 	"net/http"
+	"tuiter.com/api/kit"
 	"tuiter.com/api/rest"
 
 	"github.com/go-chi/render"
 )
 
 type Router struct {
+	time kit.Time
 	repo Repository
 }
 
@@ -47,7 +49,7 @@ func (r *Router) Search(writer http.ResponseWriter, request *http.Request) {
 
 func (r *Router) FindUserByID(writer http.ResponseWriter, request *http.Request) {
 	id := chi.URLParam(request, "id")
-	user, err := r.repo.FindUserByKey(request.Context(), "id", id)
+	user, err := r.repo.FindUserByID(request.Context(), id)
 	if err != nil {
 		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
 		if err != nil {
@@ -72,7 +74,7 @@ func (r *Router) CreateUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err := r.repo.Create(request.Context(), data.User)
+	newUser, err := r.repo.Create(request.Context(), data.User)
 	if err != nil {
 		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
 		if err != nil {
@@ -81,14 +83,17 @@ func (r *Router) CreateUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err = render.Render(writer, request, rest.NewResponse(201, "User created"))
+	err = render.Render(writer, request, &Payload{newUser})
 	if err != nil {
 		return
 	}
 }
 
-func NewUserRouter(repository Repository) *Router {
-	return &Router{repository}
+func NewUserRouter(time kit.Time, repository Repository) *Router {
+	return &Router{
+		time: time,
+		repo: repository,
+	}
 }
 
 type Payload struct {

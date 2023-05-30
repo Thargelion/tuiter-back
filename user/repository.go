@@ -5,7 +5,7 @@ import (
 )
 
 type Repository interface {
-	FindUserByKey(ctx context.Context, key string, value string) (*User, error)
-	Create(ctx context.Context, user *User) error
+	FindUserByID(ctx context.Context, ID string) (*User, error)
+	Create(ctx context.Context, user *User) (*User, error)
 	Search(ctx context.Context, query map[string]interface{}) ([]*User, error)
 }
