@@ -43,26 +43,28 @@ func (m *MockRouter) FillMockData(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type PageKey string
+
 const (
 	// PageIDKey refers to the context key that stores the next page id
-	PageIDKey = "page_id"
+	PageIDKey PageKey = "page_id"
 )
 
 // Pagination Thanks to https://github.com/jonnylangefeld/go-api/blob/v1.0.0/pkg/middelware/pagination.go !
 // Pagination middleware is used to extract the next page id from the url query
 func Pagination(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		PageID := r.URL.Query().Get(PageIDKey)
+		PageID := r.URL.Query().Get(string(PageIDKey))
 		intPageID := 0
 		var err error
 		if PageID != "" {
 			intPageID, err = strconv.Atoi(PageID)
 			if err != nil {
-				_ = render.Render(w, r, rest.ErrInvalidRequest(fmt.Errorf("couldn't read %s: %w", PageIDKey, err)))
+				_ = render.Render(w, r, rest.ErrInvalidRequest(fmt.Errorf("couldn't read %s: %w", string(PageIDKey), err)))
 				return
 			}
 		}
-		ctx := context.WithValue(r.Context(), PageIDKey, intPageID)
+		ctx := context.WithValue(r.Context(), string(PageIDKey), intPageID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
