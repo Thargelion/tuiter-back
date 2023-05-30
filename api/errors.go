@@ -1,4 +1,4 @@
-package rest
+package api
 
 import (
 	"github.com/go-chi/render"
@@ -7,7 +7,7 @@ import (
 
 type ErrResponse struct {
 	Err            error  `json:"-"`               // low-level runtime error
-	HTTPStatusCode int    `json:"-"`               // rest response status code
+	HTTPStatusCode int    `json:"-"`               // api response status code
 	StatusText     string `json:"status"`          // user-level status message
 	AppCode        int64  `json:"code,omitempty"`  // application-specific error code
 	ErrorText      string `json:"error,omitempty"` // application-level error message, for debugging
