@@ -3,11 +3,13 @@ package mysql
 import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"os"
+	"path/filepath"
 	"tuiter.com/api/kit"
 )
 
-func Connect() kit.DatabaseActions {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/tuiter"), &gorm.Config{})
+func Connect() *GormEngine {
+	db, err := gorm.Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/tuiter?parseTime=true"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -47,5 +49,25 @@ func (g *GormEngine) Find(dest interface{}, conds ...interface{}) kit.DatabaseAc
 
 func (g *GormEngine) Search(dest interface{}, query map[string]interface{}) kit.DatabaseActions {
 	g.gorm = g.gorm.Where(query).Find(dest)
+	return g
+}
+
+func (g *GormEngine) MockData() error {
+	absPath, _ := filepath.Abs("../tuiter-back/mysql/mock.sql")
+	b, err := os.ReadFile(absPath)
+	if err != nil {
+		return err
+	}
+	txExecution := g.gorm.Exec(string(b))
+	return txExecution.Error
+}
+
+func (g *GormEngine) Offset(offset int) kit.DatabaseActions {
+	g.gorm = g.gorm.Offset(offset)
+	return g
+}
+
+func (g *GormEngine) Limit(limit int) kit.DatabaseActions {
+	g.gorm = g.gorm.Limit(limit)
 	return g
 }

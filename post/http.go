@@ -4,19 +4,25 @@ import (
 	"errors"
 	"github.com/go-chi/render"
 	"net/http"
+	"tuiter.com/api/kit"
 	"tuiter.com/api/rest"
 )
 
 type Router struct {
+	time kit.Time
 	repo Repository
 }
 
-func NewPostRouter(repository Repository) *Router {
-	return &Router{repository}
+func NewPostRouter(time kit.Time, repository Repository) *Router {
+	return &Router{
+		time: time,
+		repo: repository,
+	}
 }
 
 func (r *Router) FindAll(writer http.ResponseWriter, request *http.Request) {
-	posts, err := r.repo.FindAll(request.Context())
+	pageID := request.URL.Query().Get(kit.PageIDKey)
+	posts, err := r.repo.FindAll(request.Context(), pageID)
 	if err != nil {
 		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
 		if err != nil {
@@ -40,7 +46,7 @@ func (r *Router) CreatePost(writer http.ResponseWriter, request *http.Request) {
 		}
 		return
 	}
-
+	data.Date = r.time.Now()
 	err := r.repo.Create(request.Context(), data.Post)
 	if err != nil {
 		err := render.Render(writer, request, rest.ErrInvalidRequest(err))
@@ -62,7 +68,7 @@ type Payload struct {
 
 func (u *Payload) Bind(r *http.Request) error {
 	if u.Post == nil {
-		return errors.New("missing required User fields")
+		return errors.New("missing required fields")
 	}
 
 	return nil

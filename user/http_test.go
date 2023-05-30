@@ -50,7 +50,7 @@ func (suite *UserHttpSuite) TestRouterFindUserOK() {
 	chiContext.URLParams.Add("id", "username")
 	request := suite.request.WithContext(context.WithValue(suite.request.Context(), chi.RouteCtxKey, chiContext))
 	expected := &User{}
-	suite.repo.On("FindUserByKey", "id", "username").Return(expected, nil)
+	suite.repo.On("FindUserByID", "id", "username").Return(expected, nil)
 	subject := NewUserRouter(suite.repo)
 	// When
 	subject.FindUserByID(suite.writer, request)
@@ -65,7 +65,7 @@ func (suite *UserHttpSuite) TestRouterFindUserNotFound() {
 	chiContext := chi.NewRouteContext()
 	chiContext.URLParams.Add("id", "username")
 	request := suite.request.WithContext(context.WithValue(suite.request.Context(), chi.RouteCtxKey, chiContext))
-	suite.repo.On("FindUserByKey", "id", "username").Return(&User{}, errors.New("x.x"))
+	suite.repo.On("FindUserByID", "id", "username").Return(&User{}, errors.New("x.x"))
 	subject := NewUserRouter(suite.repo)
 	// When
 	subject.FindUserByID(suite.writer, request)

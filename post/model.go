@@ -1,6 +1,9 @@
 package post
 
-import "tuiter.com/api/user"
+import (
+	"time"
+	"tuiter.com/api/user"
+)
 
 type Post struct {
 	ID       int       `json:"id"`
@@ -8,4 +11,5 @@ type Post struct {
 	Message  string    `json:"message"`
 	AuthorID int       `json:"author_id"`
 	Author   user.User `json:"author"`
+	Date     time.Time `json:"date"`
 }

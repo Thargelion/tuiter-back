@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"strconv"
 	"tuiter.com/api/kit"
 	"tuiter.com/api/post"
 )
@@ -15,12 +16,20 @@ func (r *PostRepository) Create(ctx context.Context, post *post.Post) error {
 	return res.Error()
 }
 
-func (r *PostRepository) FindAll(ctx context.Context) ([]*post.Post, error) {
+func (r *PostRepository) FindAll(ctx context.Context, pageId string) ([]*post.Post, error) {
 	var res []*post.Post
-	txResult := r.database.Find(&res)
+	pageNumber, _ := strconv.Atoi(pageId)
+	if pageNumber <= 0 {
+		pageNumber = 1
+	}
+	offset := (pageNumber - 1) * 100
+	txResult := r.database.Limit(100).Offset(offset).Find(&res)
+
 	return res, txResult.Error()
 }
 
-func NewPostRepository(creator kit.DatabaseActions) *PostRepository {
+func NewPostRepository(
+	creator kit.DatabaseActions,
+) *PostRepository {
 	return &PostRepository{database: creator}
 }

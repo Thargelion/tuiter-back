@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
+	"time"
 	"tuiter.com/api/kit"
 	"tuiter.com/api/mysql"
 	"tuiter.com/api/post"
@@ -16,8 +17,18 @@ func main() {
 	if err != nil {
 		panic("failed to migrate")
 	}
-	userRouter := user.NewUserRouter(mysql.NewUserRepository(db))
-	postRouter := post.NewPostRouter(mysql.NewPostRepository(db))
+	loc, err := time.LoadLocation("America/Buenos_Aires")
+	if err != nil {
+		panic("failed to load location")
+	}
+
+	// Dependencies
+	tuiterTime := kit.NewTuiterTime(loc)
+	userRouter := user.NewUserRouter(tuiterTime, mysql.NewUserRepository(db))
+	postRouter := post.NewPostRouter(tuiterTime, mysql.NewPostRepository(db))
+	mockRouter := kit.NewMockRouter(db)
+
+	// Chi
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -30,8 +41,11 @@ func main() {
 			r.Get("/", userRouter.Search)
 		})
 		r.Route("/posts", func(r chi.Router) {
-			r.Get("/", postRouter.FindAll)
+			r.With(kit.Pagination).Get("/", postRouter.FindAll)
 			r.Post("/", postRouter.CreatePost)
+		})
+		r.Route("/mock", func(r chi.Router) {
+			r.Post("/", mockRouter.FillMockData)
 		})
 	})
 	err = http.ListenAndServe(":3000", r)
