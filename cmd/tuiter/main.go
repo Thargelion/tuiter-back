@@ -8,14 +8,15 @@ import (
 	"time"
 	"tuiter.com/api/kit"
 	"tuiter.com/api/mysql"
-	"tuiter.com/api/post"
+	api2 "tuiter.com/api/post/api"
+	domain2 "tuiter.com/api/post/domain"
 	"tuiter.com/api/user/api"
 	"tuiter.com/api/user/domain"
 )
 
 func main() {
 	db := mysql.Connect()
-	err := db.AutoMigrate(&domain.User{}, &post.Post{})
+	err := db.AutoMigrate(&domain.User{}, &domain2.Post{})
 	if err != nil {
 		panic("failed to migrate")
 	}
@@ -27,7 +28,7 @@ func main() {
 	// Dependencies
 	tuiterTime := kit.NewTuiterTime(loc)
 	userRouter := api.NewUserRouter(tuiterTime, mysql.NewUserRepository(db))
-	postRouter := post.NewPostRouter(tuiterTime, mysql.NewPostRepository(db))
+	postRouter := api2.NewPostRouter(tuiterTime, mysql.NewPostRepository(db))
 	mockRouter := kit.NewMockRouter(db)
 
 	// Chi

@@ -1,19 +1,19 @@
-package post
+package api
 
 import (
-	"errors"
 	"github.com/go-chi/render"
 	"net/http"
 	"tuiter.com/api/api"
 	"tuiter.com/api/kit"
+	"tuiter.com/api/post/data"
 )
 
 type Router struct {
 	time kit.Time
-	repo Repository
+	repo data.Repository
 }
 
-func NewPostRouter(time kit.Time, repository Repository) *Router {
+func NewPostRouter(time kit.Time, repository data.Repository) *Router {
 	return &Router{
 		time: time,
 		repo: repository,
@@ -38,7 +38,7 @@ func (r *Router) FindAll(writer http.ResponseWriter, request *http.Request) {
 }
 
 func (r *Router) CreatePost(writer http.ResponseWriter, request *http.Request) {
-	data := &Payload{}
+	data := &PostPayload{}
 	if err := render.Bind(request, data); err != nil {
 		err := render.Render(writer, request, api.ErrInvalidRequest(err))
 		if err != nil {
@@ -60,31 +60,4 @@ func (r *Router) CreatePost(writer http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		return
 	}
-}
-
-type Payload struct {
-	*Post
-}
-
-func (u *Payload) Bind(r *http.Request) error {
-	if u.Post == nil {
-		return errors.New("missing required fields")
-	}
-
-	return nil
-}
-
-func (u *Payload) Render(w http.ResponseWriter, r *http.Request) error {
-	return nil
-}
-
-func newPostList(posts []*Post) []render.Renderer {
-	var list []render.Renderer
-	list = []render.Renderer{}
-
-	for _, posts := range posts {
-		list = append(list, &Payload{posts})
-	}
-
-	return list
 }

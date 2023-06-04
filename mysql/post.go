@@ -4,20 +4,20 @@ import (
 	"context"
 	"strconv"
 	"tuiter.com/api/kit"
-	"tuiter.com/api/post"
+	"tuiter.com/api/post/domain"
 )
 
 type PostRepository struct {
 	database kit.DatabaseActions
 }
 
-func (r *PostRepository) Create(ctx context.Context, post *post.Post) error {
+func (r *PostRepository) Create(ctx context.Context, post *domain.Post) error {
 	res := r.database.Create(post)
 	return res.Error()
 }
 
-func (r *PostRepository) FindAll(ctx context.Context, pageId string) ([]*post.Post, error) {
-	var res []*post.Post
+func (r *PostRepository) FindAll(ctx context.Context, pageId string) ([]*domain.Post, error) {
+	var res []*domain.Post
 	pageNumber, _ := strconv.Atoi(pageId)
 	if pageNumber <= 0 {
 		pageNumber = 1
