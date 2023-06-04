@@ -1,0 +1,22 @@
+linters:
+  enable-all: true
+  disable:
+    # Disabling deprecated linters
+    - deadcode
+    - ifshort
+    - interfacer
+    - scopelint
+    - varcheck
+    - structcheck
+    - maligned
+    - golint
+    - nosnakecase
+    - exhaustivestruct
+    # To fix later
+    - gomnd
+    - forcetypeassert
+    # Disabling by decision
+    - exhaustruct
+    - tagliatelle
+    - gofumpt
+    - prealloc

@@ -2,58 +2,92 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"net/http"
 	"tuiter.com/api/api"
 	"tuiter.com/api/avatar"
-	"tuiter.com/api/mysql"
-	"tuiter.com/api/post"
-	"tuiter.com/api/user"
+	mysql2 "tuiter.com/api/internal/mysql"
+	"tuiter.com/api/pkg/post"
+	"tuiter.com/api/pkg/user"
 )
 
 func main() {
-	db := mysql.Connect()
-	err := db.AutoMigrate(&user.User{}, &post.Post{})
+	// Chi
+	chiRouter := chi.NewRouter()
+	chiRouter.Use(middleware.Recoverer)
+	chiRouter.Use(middleware.Timeout(5 * time.Second))
+	chiRouter.Use(middleware.Logger)
+	chiRouter.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		api.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
+	})
+	addRoutes(chiRouter)
+	printWelcomeMessage()
+
+	server := &http.Server{
+		Addr:              ":3000",
+		ReadHeaderTimeout: 3 * time.Second,
+		Handler:           chiRouter,
+	}
+
+	err := server.ListenAndServe()
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
+	}
+}
+
+func addRoutes(chiRouter *chi.Mux) {
+	dataBase := mysql2.Connect()
+	err := dataBase.AutoMigrate(&user.User{}, &post.Post{})
+
+	if err != nil {
 		panic("failed to migrate")
 	}
+
 	if err != nil {
 		panic("failed to load location")
 	}
-	userRepo := mysql.NewUserRepository(db)
-	avatarUseCases := avatar.NewAvatarUseCases()
-
 	// Dependencies
-	userRouter := api.NewUserRouter(userRepo, user.NewUserUseCases(userRepo, avatarUseCases))
-	postRouter := api.NewPostRouter(mysql.NewPostRepository(db))
-	mockRouter := api.NewMockRouter(db)
+	userRepo := mysql2.NewUserRepository(dataBase)
+	avatarUseCases := avatar.NewAvatarUseCases()
+	userRouter := api.NewUserRouter(user.NewUserUseCases(userRepo, avatarUseCases))
+	postRouter := api.NewPostRouter(mysql2.NewPostRepository(dataBase))
+	mockRouter := api.NewMockRouter(dataBase)
 
-	// Chi
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		api.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
-	})
-	r.Route("/v1", func(r chi.Router) {
-		r.Route("/users", func(r chi.Router) {
+	chiRouter.Route("/v1", func(router chi.Router) {
+		router.Route("/users", func(r chi.Router) {
 			r.Post("/", userRouter.CreateUser)
 			r.Get("/{id}", userRouter.FindUserByID)
 			r.Get("/", userRouter.Search)
 		})
-		r.Route("/tuits", func(r chi.Router) {
+		router.Route("/tuits", func(r chi.Router) {
 			r.With(api.Pagination).Get("/", postRouter.FindAll)
 			r.Post("/", postRouter.CreatePost)
 		})
-		r.Route("/mock", func(r chi.Router) {
+		router.Route("/mock", func(r chi.Router) {
 			r.Post("/", mockRouter.FillMockData)
 		})
 	})
-	fmt.Print("Server running on port 3000\n")
-	fmt.Print("⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣤⣄⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄\n⠄⠄⠄⠄⠄⠄⠄⢀⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣤⡀⠄⠄⠄⠄⠄\n⠄⠄⠄⠄⠄⢀⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣆⠄⠄⠄⠄\n⠄⠄⠄⠄⢠⣿⣿⣿⣿⣿⢻⣿⣿⣿⣿⣿⣿⣿⣿⣯⢻⣿⣿⣿⣿⣆⠄⠄⠄\n⠄⠄⣼⢀⣿⣿⣿⣿⣏⡏⠄⠹⣿⣿⣿⣿⣿⣿⣿⣿⣧⢻⣿⣿⣿⣿⡆⠄⠄\n⠄⠄⡟⣼⣿⣿⣿⣿⣿⠄⠄⠄⠈⠻⣿⣿⣿⣿⣿⣿⣿⣇⢻⣿⣿⣿⣿⠄⠄\n⠄⢰⠃⣿⣿⠿⣿⣿⣿⠄⠄⠄⠄⠄⠄⠙⠿⣿⣿⣿⣿⣿⠄⢿⣿⣿⣿⡄⠄\n⠄⢸⢠⣿⣿⣧⡙⣿⣿⡆⠄⠄⠄⠄⠄⠄⠄⠈⠛⢿⣿⣿⡇⠸⣿⡿⣸⡇⠄\n⠄⠈⡆⣿⣿⣿⣿⣦⡙⠳⠄⠄⠄⠄⠄⠄⢀⣠⣤⣀⣈⠙⠃⠄⠿⢇⣿⡇⠄\n⠄⠄⡇⢿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⣠⣶⣿⣿⣿⣿⣿⣿⣷⣆⡀⣼⣿⡇⠄\n⠄⠄⢹⡘⣿⣿⣿⢿⣷⡀⠄⢀⣴⣾⣟⠉⠉⠉⠉⣽⣿⣿⣿⣿⠇⢹⣿⠃⠄\n⠄⠄⠄⢷⡘⢿⣿⣎⢻⣷⠰⣿⣿⣿⣿⣦⣀⣀⣴⣿⣿⣿⠟⢫⡾⢸⡟⠄⠄\n⠄⠄⠄⠄⠻⣦⡙⠿⣧⠙⢷⠙⠻⠿⢿⡿⠿⠿⠛⠋⠉⠄⠂⠘⠁⠞⠄⠄⠄\n⠄⠄⠄⠄⠄⠈⠙⠑⣠⣤⣴⡖⠄⠿⣋⣉⣉⡁⠄⢾⣦⠄⠄⠄⠄⠄⠄⠄⠄\n⠄⠄⠄⠄⠄⠄⠄⠄⠛⠛⠋⠁⣠⣾⣿⣿⣿⣿⡆⠄⣿⠆⠄⠄⠄⠄⠄⠄⠄")
-	err = http.ListenAndServe(":3000", r)
-	if err != nil {
-		panic(err)
-	}
+}
+
+func printWelcomeMessage() {
+	fmt.Print("Server running on port 3000\n") //nolint:forbidigo
+	fmt.Print("" +                             //nolint:forbidigo
+		"⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣤⣄⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄\n" +
+		"⠄⠄⠄⠄⠄⠄⠄⢀⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣤⡀⠄⠄⠄⠄⠄\n" +
+		"⠄⠄⠄⠄⠄⢀⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣆⠄⠄⠄⠄\n" +
+		"⠄⠄⠄⠄⢠⣿⣿⣿⣿⣿⢻⣿⣿⣿⣿⣿⣿⣿⣿⣯⢻⣿⣿⣿⣿⣆⠄⠄⠄\n" +
+		"⠄⠄⣼⢀⣿⣿⣿⣿⣏⡏⠄⠹⣿⣿⣿⣿⣿⣿⣿⣿⣧⢻⣿⣿⣿⣿⡆⠄⠄\n" +
+		"⠄⠄⡟⣼⣿⣿⣿⣿⣿⠄⠄⠄⠈⠻⣿⣿⣿⣿⣿⣿⣿⣇⢻⣿⣿⣿⣿⠄⠄\n" +
+		"⠄⢰⠃⣿⣿⠿⣿⣿⣿⠄⠄⠄⠄⠄⠄⠙⠿⣿⣿⣿⣿⣿⠄⢿⣿⣿⣿⡄⠄\n" +
+		"⠄⢸⢠⣿⣿⣧⡙⣿⣿⡆⠄⠄⠄⠄⠄⠄⠄⠈⠛⢿⣿⣿⡇⠸⣿⡿⣸⡇⠄\n" +
+		"⠄⠈⡆⣿⣿⣿⣿⣦⡙⠳⠄⠄⠄⠄⠄⠄⢀⣠⣤⣀⣈⠙⠃⠄⠿⢇⣿⡇⠄\n" +
+		"⠄⠄⡇⢿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⣠⣶⣿⣿⣿⣿⣿⣿⣷⣆⡀⣼⣿⡇⠄\n" +
+		"⠄⠄⢹⡘⣿⣿⣿⢿⣷⡀⠄⢀⣴⣾⣟⠉⠉⠉⠉⣽⣿⣿⣿⣿⠇⢹⣿⠃⠄\n" +
+		"⠄⠄⠄⢷⡘⢿⣿⣎⢻⣷⠰⣿⣿⣿⣿⣦⣀⣀⣴⣿⣿⣿⠟⢫⡾⢸⡟⠄⠄\n" +
+		"⠄⠄⠄⠄⠻⣦⡙⠿⣧⠙⢷⠙⠻⠿⢿⡿⠿⠿⠛⠋⠉⠄⠂⠘⠁⠞⠄⠄⠄\n" +
+		"⠄⠄⠄⠄⠄⠈⠙⠑⣠⣤⣴⡖⠄⠿⣋⣉⣉⡁⠄⢾⣦⠄⠄⠄⠄⠄⠄⠄⠄\n" +
+		"⠄⠄⠄⠄⠄⠄⠄⠄⠛⠛⠋⠁⣠⣾⣿⣿⣿⣿⡆⠄⣿⠆⠄⠄⠄⠄⠄⠄⠄")
 }

@@ -5,6 +5,6 @@ import (
 )
 
 type Repository interface {
-	ListByPage(ctx context.Context, pageId string) ([]*Post, error)
+	ListByPage(ctx context.Context, pageID string) ([]*Post, error)
 	Create(ctx context.Context, post *Post) error
 }

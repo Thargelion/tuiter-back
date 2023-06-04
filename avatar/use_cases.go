@@ -4,8 +4,8 @@ const (
 	avatarURL = "https://ui-avatars.com/api/?name="
 )
 
-func NewAvatarUseCases() UseCases {
-	return &avatarService{}
+func NewAvatarUseCases() *Service {
+	return &Service{}
 }
 
 type UseCases interface {
@@ -16,9 +16,9 @@ type AddAvatarUseCase interface {
 	New(userName string) string
 }
 
-type avatarService struct {
+type Service struct {
 }
 
-func (c *avatarService) New(userName string) string {
+func (c *Service) New(userName string) string {
 	return avatarURL + userName
 }

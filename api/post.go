@@ -1,37 +1,36 @@
 package api
 
 import (
-	"errors"
-	"github.com/go-chi/render"
 	"net/http"
-	"tuiter.com/api/post"
+
+	"github.com/go-chi/render"
+	post2 "tuiter.com/api/pkg/post"
 )
 
-func NewPostRouter(repository post.Repository) post.Api {
-	return &router{
+func NewPostRouter(repository post2.Repository) *Router {
+	return &Router{
 		repo: repository,
 	}
 }
 
 type postPayload struct {
-	*post.Post
+	*post2.Post
 }
 
-func (u *postPayload) Bind(r *http.Request) error {
+func (u *postPayload) Bind(_ *http.Request) error {
 	if u.Post == nil {
-		return errors.New("missing required fields")
+		return errInvalidRequest
 	}
 
 	return nil
 }
 
-func (u *postPayload) Render(w http.ResponseWriter, r *http.Request) error {
+func (u *postPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
 	return nil
 }
 
-func newPostList(posts []*post.Post) []render.Renderer {
+func newPostList(posts []*post2.Post) []render.Renderer {
 	var list []render.Renderer
-	list = []render.Renderer{}
 
 	for _, posts := range posts {
 		list = append(list, &postPayload{posts})
@@ -40,18 +39,20 @@ func newPostList(posts []*post.Post) []render.Renderer {
 	return list
 }
 
-type router struct {
-	repo post.Repository
+type Router struct {
+	repo post2.Repository
 }
 
-func (r *router) FindAll(writer http.ResponseWriter, request *http.Request) {
+func (r *Router) FindAll(writer http.ResponseWriter, request *http.Request) {
 	pageID := request.URL.Query().Get(string(PageIDKey))
 	posts, err := r.repo.ListByPage(request.Context(), pageID)
+
 	if err != nil {
 		err := render.Render(writer, request, ErrInvalidRequest(err))
 		if err != nil {
 			return
 		}
+
 		return
 	}
 
@@ -61,21 +62,26 @@ func (r *router) FindAll(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (r *router) CreatePost(writer http.ResponseWriter, request *http.Request) {
+func (r *Router) CreatePost(writer http.ResponseWriter, request *http.Request) {
 	payload := &postPayload{}
 	if err := render.Bind(request, payload); err != nil {
 		err := render.Render(writer, request, ErrInvalidRequest(err))
 		if err != nil {
 			return
 		}
+
 		return
 	}
+
 	err := r.repo.Create(request.Context(), payload.Post)
+
 	if err != nil {
 		err := render.Render(writer, request, ErrInvalidRequest(err))
+
 		if err != nil {
 			return
 		}
+
 		return
 	}
 

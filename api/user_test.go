@@ -1,19 +1,23 @@
-package api
+package api_test
 
 import (
 	"context"
 	"errors"
-	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+	"tuiter.com/api/api"
 	"tuiter.com/api/pkg"
-	"tuiter.com/api/user"
+	"tuiter.com/api/pkg/user"
 )
+
+var errMock = errors.New("mock error")
 
 type mockTuiterTime struct {
 	mock.Mock
@@ -21,74 +25,83 @@ type mockTuiterTime struct {
 
 func (m *mockTuiterTime) Now() time.Time {
 	args := m.Called()
+
 	return args.Get(0).(time.Time)
 }
 
-type mockRepository struct {
+type mockUseCases struct {
 	mock.Mock
 }
 
-func (m *mockRepository) FindUserByID(ctx context.Context, ID string) (*user.User, error) {
-	args := m.Called(ID)
-	return args.Get(0).(*user.User), args.Error(1)
+func (m *mockUseCases) FindUserByID(_ context.Context, id string) (*user.User, error) {
+	args := m.Called(id)
+
+	return args.Get(0).(*user.User), args.Error(1) //nolint:wrapcheck
 }
 
-func (m *mockRepository) Create(ctx context.Context, u *user.User) (*user.User, error) {
+func (m *mockUseCases) Create(_ context.Context, u *user.User) (*user.User, error) {
 	args := m.Called(u)
-	return args.Get(0).(*user.User), args.Error(1)
+
+	return args.Get(0).(*user.User), args.Error(1) //nolint:wrapcheck
 }
 
-func (m *mockRepository) Search(ctx context.Context, query map[string]interface{}) ([]*user.User, error) {
+func (m *mockUseCases) Search(_ context.Context, query map[string]interface{}) ([]*user.User, error) {
 	args := m.Called(query)
-	return args.Get(0).([]*user.User), args.Error(1)
+
+	return args.Get(0).([]*user.User), args.Error(1) //nolint:wrapcheck
 }
 
-type UserHttpSuite struct {
+type UserHTTPSuite struct {
 	suite.Suite
-	writer  *httptest.ResponseRecorder
-	request *http.Request
-	repo    *mockRepository
-	tt      pkg.Time
+	writer       *httptest.ResponseRecorder
+	request      *http.Request
+	useCasesMock *mockUseCases
+	tt           pkg.Time
 }
 
-func (suite *UserHttpSuite) SetupTest() {
+func (suite *UserHTTPSuite) SetupTest() {
 	suite.writer = httptest.NewRecorder()
-	suite.request = httptest.NewRequest("GET", "/", nil)
-	suite.repo = &mockRepository{}
+	suite.request = httptest.NewRequest(http.MethodGet, "/", nil)
+	suite.useCasesMock = &mockUseCases{}
 	suite.tt = &mockTuiterTime{}
 }
 
-func (suite *UserHttpSuite) TestRouterFindUserOK() {
+func (suite *UserHTTPSuite) TestRouterFindUserOK() {
 	// Given
 	chiContext := chi.NewRouteContext()
 	chiContext.URLParams.Add("id", "username")
 	request := suite.request.WithContext(context.WithValue(suite.request.Context(), chi.RouteCtxKey, chiContext))
 	expected := &user.User{}
-	suite.repo.On("FindUserByID", "username").Return(expected, nil)
-	subject := NewUserRouter(suite.tt, suite.repo)
+	suite.useCasesMock.On("FindUserByID", "username").Return(expected, nil)
+	subject := api.NewUserRouter(suite.useCasesMock)
 	// When
 	subject.FindUserByID(suite.writer, request)
 	// Then
-	suite.repo.AssertExpectations(suite.T())
+	suite.useCasesMock.AssertExpectations(suite.T())
+
 	res := suite.writer.Result()
+	defer res.Body.Close()
 	assert.Equal(suite.T(), 200, res.StatusCode)
 }
 
-func (suite *UserHttpSuite) TestRouterFindUserNotFound() {
+func (suite *UserHTTPSuite) TestRouterFindUserNotFound() {
 	// Given
 	chiContext := chi.NewRouteContext()
 	chiContext.URLParams.Add("id", "username")
 	request := suite.request.WithContext(context.WithValue(suite.request.Context(), chi.RouteCtxKey, chiContext))
-	suite.repo.On("FindUserByID", "username").Return(&user.User{}, errors.New("x.x"))
-	subject := NewUserRouter(suite.tt, suite.repo)
+	suite.useCasesMock.On("FindUserByID", "username").Return(&user.User{}, errMock)
+	subject := api.NewUserRouter(suite.useCasesMock)
 	// When
 	subject.FindUserByID(suite.writer, request)
 	// Then
-	suite.repo.AssertExpectations(suite.T())
+	suite.useCasesMock.AssertExpectations(suite.T())
+
 	res := suite.writer.Result()
+	defer res.Body.Close()
 	assert.Equal(suite.T(), 400, res.StatusCode)
 }
 
 func TestHtpFindSuite(t *testing.T) {
-	suite.Run(t, new(UserHttpSuite))
+	t.Parallel()
+	suite.Run(t, new(UserHTTPSuite))
 }

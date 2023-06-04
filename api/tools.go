@@ -3,9 +3,10 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/go-chi/render"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/render"
 )
 
 type Mocker interface {
@@ -22,48 +23,54 @@ func NewMockRouter(mocker Mocker) *MockRouter {
 	}
 }
 
-func (m *MockRouter) FillMockData(w http.ResponseWriter, r *http.Request) {
+func (m *MockRouter) FillMockData(responseWriter http.ResponseWriter, request *http.Request) {
 	err := m.mocker.MockData()
 	if err != nil {
-		err := render.Render(w, r, &ErrResponse{
+		err := render.Render(responseWriter, request, &ErrResponse{
 			Err:            err,
-			HTTPStatusCode: 500,
+			HTTPStatusCode: http.StatusInternalServerError,
 			StatusText:     "Internal server error",
 			ErrorText:      err.Error(),
 		})
 		if err != nil {
-			w.WriteHeader(500)
+			responseWriter.WriteHeader(http.StatusInternalServerError)
 		}
+
 		return
 	}
-	err = render.Render(w, r, newResponse(200, "Mock data created"))
+
+	err = render.Render(responseWriter, request, newResponse(http.StatusOK, "Mock data created"))
+
 	if err != nil {
-		w.WriteHeader(200)
+		responseWriter.WriteHeader(http.StatusOK)
 	}
 }
 
 type PageKey string
 
 const (
-	// PageIDKey refers to the context key that stores the next page id
+	// PageIDKey refers to the context key that stores the next page id.
 	PageIDKey = PageKey("page")
 )
 
 // Pagination Thanks to https://github.com/jonnylangefeld/go-api/blob/v1.0.0/pkg/middelware/pagination.go !
-// Pagination middleware is used to extract the next page id from the url query
+// Pagination middleware is used to extract the next page id from the url query.
 func Pagination(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		PageID := r.URL.Query().Get(string(PageIDKey))
+	return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
+		PageID := request.URL.Query().Get(string(PageIDKey))
 		intPageID := 0
 		var err error
 		if PageID != "" {
 			intPageID, err = strconv.Atoi(PageID)
 			if err != nil {
-				_ = render.Render(w, r, ErrInvalidRequest(fmt.Errorf("couldn't read %s: %w", PageIDKey, err)))
+				_ = render.Render(responseWriter, request, ErrInvalidRequest(
+					fmt.Errorf("couldn't read %s: %w esponseWriter", PageIDKey, err)),
+				)
+
 				return
 			}
 		}
-		ctx := context.WithValue(r.Context(), PageIDKey, intPageID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		ctx := context.WithValue(request.Context(), PageIDKey, intPageID)
+		next.ServeHTTP(responseWriter, request.WithContext(ctx))
 	})
 }
