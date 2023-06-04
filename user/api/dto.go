@@ -4,11 +4,35 @@ import (
 	"errors"
 	"github.com/go-chi/render"
 	"net/http"
-	"tuiter.com/api/user/domain"
+	"tuiter.com/api/user"
 )
 
+import "github.com/go-playground/validator/v10"
+
+type userCreatePayload struct {
+	Name      string `json:"name" validate:"required"`
+	AvatarURL string `json:"avatar_url"`
+}
+
+func (u *userCreatePayload) ToUser() *user.User {
+	return &user.User{
+		Name:      u.Name,
+		AvatarURL: u.AvatarURL,
+	}
+}
+
 type userPayload struct {
-	*domain.User
+	*user.User
+}
+
+func (u *userCreatePayload) Bind(r *http.Request) error {
+	v := validator.New()
+	err := v.Struct(u)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type userFilter struct {
@@ -27,12 +51,12 @@ func (u *userPayload) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func newUserList(users []*domain.User) []render.Renderer {
+func newUserList(users []*user.User) []render.Renderer {
 	var list []render.Renderer
 	list = []render.Renderer{}
 
-	for _, user := range users {
-		list = append(list, &userPayload{user})
+	for _, u := range users {
+		list = append(list, &userPayload{u})
 	}
 
 	return list

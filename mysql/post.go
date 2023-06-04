@@ -3,21 +3,21 @@ package mysql
 import (
 	"context"
 	"strconv"
-	"tuiter.com/api/kit"
-	"tuiter.com/api/post/domain"
+	"tuiter.com/api/pkg"
+	"tuiter.com/api/post"
 )
 
 type PostRepository struct {
-	database kit.DatabaseActions
+	database pkg.DatabaseActions
 }
 
-func (r *PostRepository) Create(ctx context.Context, post *domain.Post) error {
+func (r *PostRepository) Create(ctx context.Context, post *post.Post) error {
 	res := r.database.Create(post)
 	return res.Error()
 }
 
-func (r *PostRepository) FindAll(ctx context.Context, pageId string) ([]*domain.Post, error) {
-	var res []*domain.Post
+func (r *PostRepository) ListByPage(ctx context.Context, pageId string) ([]*post.Post, error) {
+	var res []*post.Post
 	pageNumber, _ := strconv.Atoi(pageId)
 	if pageNumber <= 0 {
 		pageNumber = 1
@@ -29,7 +29,7 @@ func (r *PostRepository) FindAll(ctx context.Context, pageId string) ([]*domain.
 }
 
 func NewPostRepository(
-	creator kit.DatabaseActions,
+	creator pkg.DatabaseActions,
 ) *PostRepository {
 	return &PostRepository{database: creator}
 }

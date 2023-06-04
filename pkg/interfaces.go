@@ -1,4 +1,4 @@
-package kit
+package pkg
 
 type Creator interface {
 	Create(value interface{}) DatabaseActions

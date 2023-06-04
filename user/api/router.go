@@ -2,18 +2,18 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/gorilla/schema"
 	"net/http"
 	"tuiter.com/api/api"
-	"tuiter.com/api/kit"
-	"tuiter.com/api/user/data"
+	"tuiter.com/api/user"
 )
 
 type UserRouter struct {
-	time kit.Time
-	repo data.Repository
+	useCases user.UseCases
+	repo     user.Repository
 }
 
 func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
@@ -64,21 +64,24 @@ func (r *UserRouter) FindUserByID(writer http.ResponseWriter, request *http.Requ
 }
 
 func (r *UserRouter) CreateUser(writer http.ResponseWriter, request *http.Request) {
-	var payload *userPayload
+	payload := &userCreatePayload{}
 	if err := render.Bind(request, payload); err != nil {
 		err := render.Render(writer, request, api.ErrInvalidRequest(err))
 		if err != nil {
+			fmt.Println(err)
 			return
 		}
 		return
 	}
 
-	newUser, err := r.repo.Create(request.Context(), payload.User)
+	newUser, err := r.useCases.Create(request.Context(), payload.ToUser())
 	if err != nil {
 		err := render.Render(writer, request, api.ErrInvalidRequest(err))
 		if err != nil {
+			fmt.Println(err)
 			return
 		}
+
 		return
 	}
 
@@ -88,9 +91,9 @@ func (r *UserRouter) CreateUser(writer http.ResponseWriter, request *http.Reques
 	}
 }
 
-func NewUserRouter(time kit.Time, repository data.Repository) *UserRouter {
+func NewUserRouter(repository user.Repository, useCases user.UseCases) *UserRouter {
 	return &UserRouter{
-		time: time,
-		repo: repository,
+		repo:     repository,
+		useCases: useCases,
 	}
 }

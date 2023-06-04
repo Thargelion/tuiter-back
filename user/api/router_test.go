@@ -11,8 +11,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-	"tuiter.com/api/kit"
-	"tuiter.com/api/user/domain"
+	"tuiter.com/api/pkg"
+	"tuiter.com/api/user"
 )
 
 type mockTuiterTime struct {
@@ -28,19 +28,19 @@ type mockRepository struct {
 	mock.Mock
 }
 
-func (m *mockRepository) FindUserByID(ctx context.Context, ID string) (*domain.User, error) {
+func (m *mockRepository) FindUserByID(ctx context.Context, ID string) (*user.User, error) {
 	args := m.Called(ID)
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*user.User), args.Error(1)
 }
 
-func (m *mockRepository) Create(ctx context.Context, user *domain.User) (*domain.User, error) {
-	args := m.Called(user)
-	return args.Get(0).(*domain.User), args.Error(1)
+func (m *mockRepository) Create(ctx context.Context, u *user.User) (*user.User, error) {
+	args := m.Called(u)
+	return args.Get(0).(*user.User), args.Error(1)
 }
 
-func (m *mockRepository) Search(ctx context.Context, query map[string]interface{}) ([]*domain.User, error) {
+func (m *mockRepository) Search(ctx context.Context, query map[string]interface{}) ([]*user.User, error) {
 	args := m.Called(query)
-	return args.Get(0).([]*domain.User), args.Error(1)
+	return args.Get(0).([]*user.User), args.Error(1)
 }
 
 type UserHttpSuite struct {
@@ -48,7 +48,7 @@ type UserHttpSuite struct {
 	writer  *httptest.ResponseRecorder
 	request *http.Request
 	repo    *mockRepository
-	tt      kit.Time
+	tt      pkg.Time
 }
 
 func (suite *UserHttpSuite) SetupTest() {
@@ -63,7 +63,7 @@ func (suite *UserHttpSuite) TestRouterFindUserOK() {
 	chiContext := chi.NewRouteContext()
 	chiContext.URLParams.Add("id", "username")
 	request := suite.request.WithContext(context.WithValue(suite.request.Context(), chi.RouteCtxKey, chiContext))
-	expected := &domain.User{}
+	expected := &user.User{}
 	suite.repo.On("FindUserByID", "username").Return(expected, nil)
 	subject := NewUserRouter(suite.tt, suite.repo)
 	// When
@@ -79,7 +79,7 @@ func (suite *UserHttpSuite) TestRouterFindUserNotFound() {
 	chiContext := chi.NewRouteContext()
 	chiContext.URLParams.Add("id", "username")
 	request := suite.request.WithContext(context.WithValue(suite.request.Context(), chi.RouteCtxKey, chiContext))
-	suite.repo.On("FindUserByID", "username").Return(&domain.User{}, errors.New("x.x"))
+	suite.repo.On("FindUserByID", "username").Return(&user.User{}, errors.New("x.x"))
 	subject := NewUserRouter(suite.tt, suite.repo)
 	// When
 	subject.FindUserByID(suite.writer, request)

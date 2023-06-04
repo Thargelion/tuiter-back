@@ -5,37 +5,38 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
-	"time"
-	"tuiter.com/api/kit"
+	"tuiter.com/api/avatar"
 	"tuiter.com/api/mysql"
-	api2 "tuiter.com/api/post/api"
-	domain2 "tuiter.com/api/post/domain"
-	"tuiter.com/api/user/api"
-	"tuiter.com/api/user/domain"
+	"tuiter.com/api/pkg"
+	"tuiter.com/api/post"
+	postApi "tuiter.com/api/post/api"
+	"tuiter.com/api/user"
+	userApi "tuiter.com/api/user/api"
 )
 
 func main() {
 	db := mysql.Connect()
-	err := db.AutoMigrate(&domain.User{}, &domain2.Post{})
+	err := db.AutoMigrate(&user.User{}, &post.Post{})
 	if err != nil {
+		fmt.Println(err)
 		panic("failed to migrate")
 	}
-	loc, err := time.LoadLocation("America/Buenos_Aires")
 	if err != nil {
 		panic("failed to load location")
 	}
+	userRepo := mysql.NewUserRepository(db)
+	avatarUseCases := avatar.NewAvatarUseCases()
 
 	// Dependencies
-	tuiterTime := kit.NewTuiterTime(loc)
-	userRouter := api.NewUserRouter(tuiterTime, mysql.NewUserRepository(db))
-	postRouter := api2.NewPostRouter(tuiterTime, mysql.NewPostRepository(db))
-	mockRouter := kit.NewMockRouter(db)
+	userRouter := userApi.NewUserRouter(userRepo, user.NewUserUseCases(userRepo, avatarUseCases))
+	postRouter := postApi.NewPostRouter(mysql.NewPostRepository(db))
+	mockRouter := pkg.NewMockRouter(db)
 
 	// Chi
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		kit.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
+		pkg.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
 	r.Route("/v1", func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
@@ -44,7 +45,7 @@ func main() {
 			r.Get("/", userRouter.Search)
 		})
 		r.Route("/tuits", func(r chi.Router) {
-			r.With(kit.Pagination).Get("/", postRouter.FindAll)
+			r.With(pkg.Pagination).Get("/", postRouter.FindAll)
 			r.Post("/", postRouter.CreatePost)
 		})
 		r.Route("/mock", func(r chi.Router) {

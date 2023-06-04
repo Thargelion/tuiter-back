@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"path/filepath"
-	"tuiter.com/api/kit"
+	"tuiter.com/api/pkg"
 )
 
 func Connect() *GormEngine {
@@ -28,12 +28,12 @@ func (g *GormEngine) Error() error {
 	return g.gorm.Error
 }
 
-func (g *GormEngine) Create(value interface{}) kit.DatabaseActions {
+func (g *GormEngine) Create(value interface{}) pkg.DatabaseActions {
 	g.gorm = g.gorm.Create(value)
 	return g
 }
 
-func (g *GormEngine) First(dest interface{}, conds ...interface{}) kit.DatabaseActions {
+func (g *GormEngine) First(dest interface{}, conds ...interface{}) pkg.DatabaseActions {
 	g.gorm = g.gorm.First(dest, conds...)
 	return g
 }
@@ -42,12 +42,12 @@ func (g *GormEngine) AutoMigrate(dst ...interface{}) error {
 	return g.gorm.AutoMigrate(dst...)
 }
 
-func (g *GormEngine) Find(dest interface{}, conds ...interface{}) kit.DatabaseActions {
+func (g *GormEngine) Find(dest interface{}, conds ...interface{}) pkg.DatabaseActions {
 	g.gorm = g.gorm.Where(conds).Find(dest)
 	return g
 }
 
-func (g *GormEngine) Search(dest interface{}, query map[string]interface{}) kit.DatabaseActions {
+func (g *GormEngine) Search(dest interface{}, query map[string]interface{}) pkg.DatabaseActions {
 	g.gorm = g.gorm.Where(query).Find(dest)
 	return g
 }
@@ -62,12 +62,12 @@ func (g *GormEngine) MockData() error {
 	return txExecution.Error
 }
 
-func (g *GormEngine) Offset(offset int) kit.DatabaseActions {
+func (g *GormEngine) Offset(offset int) pkg.DatabaseActions {
 	g.gorm = g.gorm.Offset(offset)
 	return g
 }
 
-func (g *GormEngine) Limit(limit int) kit.DatabaseActions {
+func (g *GormEngine) Limit(limit int) pkg.DatabaseActions {
 	g.gorm = g.gorm.Limit(limit)
 	return g
 }
