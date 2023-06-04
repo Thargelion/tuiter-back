@@ -2,8 +2,20 @@ package api
 
 import (
 	"github.com/go-chi/render"
+	"log"
 	"net/http"
 )
+
+type LogWriter struct {
+	http.ResponseWriter
+}
+
+func (w LogWriter) Write(p []byte) {
+	_, err := w.ResponseWriter.Write(p)
+	if err != nil {
+		log.Printf("Write failed: %v", err)
+	}
+}
 
 type ErrResponse struct {
 	Err            error  `json:"-"`               // low-level runtime error

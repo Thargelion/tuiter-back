@@ -1,5 +1,9 @@
 package avatar
 
+const (
+	avatarURL = "https://ui-avatars.com/api/?name="
+)
+
 func NewAvatarUseCases() UseCases {
 	return &avatarService{}
 }
@@ -14,10 +18,6 @@ type AddAvatarUseCase interface {
 
 type avatarService struct {
 }
-
-const (
-	avatarURL = "https://ui-avatars.com/api/?name="
-)
 
 func (c *avatarService) New(userName string) string {
 	return avatarURL + userName

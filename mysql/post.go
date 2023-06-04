@@ -7,16 +7,16 @@ import (
 	"tuiter.com/api/post"
 )
 
-type PostRepository struct {
+type postRepository struct {
 	database pkg.DatabaseActions
 }
 
-func (r *PostRepository) Create(ctx context.Context, post *post.Post) error {
+func (r *postRepository) Create(ctx context.Context, post *post.Post) error {
 	res := r.database.Create(post)
 	return res.Error()
 }
 
-func (r *PostRepository) ListByPage(ctx context.Context, pageId string) ([]*post.Post, error) {
+func (r *postRepository) ListByPage(ctx context.Context, pageId string) ([]*post.Post, error) {
 	var res []*post.Post
 	pageNumber, _ := strconv.Atoi(pageId)
 	if pageNumber <= 0 {
@@ -30,6 +30,6 @@ func (r *PostRepository) ListByPage(ctx context.Context, pageId string) ([]*post
 
 func NewPostRepository(
 	creator pkg.DatabaseActions,
-) *PostRepository {
-	return &PostRepository{database: creator}
+) post.Repository {
+	return &postRepository{database: creator}
 }

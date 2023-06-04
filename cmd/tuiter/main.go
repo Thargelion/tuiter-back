@@ -5,13 +5,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
+	"tuiter.com/api/api"
 	"tuiter.com/api/avatar"
 	"tuiter.com/api/mysql"
-	"tuiter.com/api/pkg"
 	"tuiter.com/api/post"
-	postApi "tuiter.com/api/post/api"
 	"tuiter.com/api/user"
-	userApi "tuiter.com/api/user/api"
 )
 
 func main() {
@@ -28,15 +26,15 @@ func main() {
 	avatarUseCases := avatar.NewAvatarUseCases()
 
 	// Dependencies
-	userRouter := userApi.NewUserRouter(userRepo, user.NewUserUseCases(userRepo, avatarUseCases))
-	postRouter := postApi.NewPostRouter(mysql.NewPostRepository(db))
-	mockRouter := pkg.NewMockRouter(db)
+	userRouter := api.NewUserRouter(userRepo, user.NewUserUseCases(userRepo, avatarUseCases))
+	postRouter := api.NewPostRouter(mysql.NewPostRepository(db))
+	mockRouter := api.NewMockRouter(db)
 
 	// Chi
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		pkg.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
+		api.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
 	r.Route("/v1", func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
@@ -45,7 +43,7 @@ func main() {
 			r.Get("/", userRouter.Search)
 		})
 		r.Route("/tuits", func(r chi.Router) {
-			r.With(pkg.Pagination).Get("/", postRouter.FindAll)
+			r.With(api.Pagination).Get("/", postRouter.FindAll)
 			r.Post("/", postRouter.CreatePost)
 		})
 		r.Route("/mock", func(r chi.Router) {

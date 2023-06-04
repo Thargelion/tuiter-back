@@ -1,4 +1,4 @@
-package pkg
+package api
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"github.com/go-chi/render"
 	"net/http"
 	"strconv"
-	"tuiter.com/api/api"
 )
 
 type Mocker interface {
@@ -26,7 +25,7 @@ func NewMockRouter(mocker Mocker) *MockRouter {
 func (m *MockRouter) FillMockData(w http.ResponseWriter, r *http.Request) {
 	err := m.mocker.MockData()
 	if err != nil {
-		err := render.Render(w, r, &api.ErrResponse{
+		err := render.Render(w, r, &ErrResponse{
 			Err:            err,
 			HTTPStatusCode: 500,
 			StatusText:     "Internal server error",
@@ -37,7 +36,7 @@ func (m *MockRouter) FillMockData(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	err = render.Render(w, r, api.NewResponse(200, "Mock data created"))
+	err = render.Render(w, r, newResponse(200, "Mock data created"))
 	if err != nil {
 		w.WriteHeader(200)
 	}
@@ -60,7 +59,7 @@ func Pagination(next http.Handler) http.Handler {
 		if PageID != "" {
 			intPageID, err = strconv.Atoi(PageID)
 			if err != nil {
-				_ = render.Render(w, r, api.ErrInvalidRequest(fmt.Errorf("couldn't read %s: %w", PageIDKey, err)))
+				_ = render.Render(w, r, ErrInvalidRequest(fmt.Errorf("couldn't read %s: %w", PageIDKey, err)))
 				return
 			}
 		}
