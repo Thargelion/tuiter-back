@@ -7,16 +7,16 @@ import (
 	"tuiter.com/api/pkg/user"
 )
 
-func NewUserRepository(creator databaseActions) *UserRepository {
+func NewUserRepository(creator DatabaseActions) *UserRepository {
 	return &UserRepository{database: creator}
 }
 
 type UserRepository struct {
-	database databaseActions
+	database DatabaseActions
 }
 
 func (r *UserRepository) Search(_ context.Context, query map[string]interface{}) ([]*user.User, error) {
-	var txResult databaseActions
+	var txResult DatabaseActions
 
 	var res []*user.User
 
@@ -26,7 +26,11 @@ func (r *UserRepository) Search(_ context.Context, query map[string]interface{})
 		txResult = r.database.Search(&res, query)
 	}
 
-	return res, fmt.Errorf("error searching users on database %w", txResult.Error())
+	if txResult.Error() != nil {
+		return nil, fmt.Errorf("error searching users on database %w", txResult.Error())
+	}
+
+	return res, nil
 }
 
 func (r *UserRepository) FindUserByID(_ context.Context, iD string) (*user.User, error) {
@@ -39,5 +43,9 @@ func (r *UserRepository) FindUserByID(_ context.Context, iD string) (*user.User,
 func (r *UserRepository) Create(_ context.Context, user *user.User) (*user.User, error) {
 	txResult := r.database.Create(user)
 
-	return user, fmt.Errorf("error creating user on database %w", txResult.Error())
+	if txResult.Error() != nil {
+		return nil, fmt.Errorf("error creating user on database %w", txResult.Error())
+	}
+
+	return user, nil
 }

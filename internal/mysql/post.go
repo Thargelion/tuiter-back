@@ -8,12 +8,12 @@ import (
 	"tuiter.com/api/pkg/post"
 )
 
-func NewPostRepository(creator databaseActions) *PostRepository {
+func NewPostRepository(creator DatabaseActions) *PostRepository {
 	return &PostRepository{database: creator}
 }
 
 type PostRepository struct {
-	database databaseActions
+	database DatabaseActions
 }
 
 func (r *PostRepository) Create(_ context.Context, post *post.Post) error {

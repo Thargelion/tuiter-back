@@ -12,6 +12,7 @@ import (
 	mysql2 "tuiter.com/api/internal/mysql"
 	"tuiter.com/api/pkg/post"
 	"tuiter.com/api/pkg/user"
+	"tuiter.com/api/pkg/userpost"
 )
 
 func main() {
@@ -40,7 +41,7 @@ func main() {
 
 func addRoutes(chiRouter *chi.Mux) {
 	dataBase := mysql2.Connect()
-	err := dataBase.AutoMigrate(&user.User{}, &post.Post{})
+	err := dataBase.AutoMigrate(&user.User{}, &post.Post{}, &userpost.UserPost{})
 
 	if err != nil {
 		panic("failed to migrate")

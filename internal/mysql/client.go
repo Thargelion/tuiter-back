@@ -23,46 +23,50 @@ func Connect() *GormEngine {
 }
 
 type Creator interface {
-	Create(value interface{}) databaseActions
+	Create(value interface{}) *GormEngine
 }
 
 type Reader interface {
-	First(dest interface{}, conds ...interface{}) databaseActions
-	Find(dest interface{}, conds ...interface{}) databaseActions
-	Search(dest interface{}, query map[string]interface{}) databaseActions
-	Offset(offset int) databaseActions
-	Limit(limit int) databaseActions
+	First(dest interface{}, conds ...interface{}) *GormEngine
+	Find(dest interface{}, conds ...interface{}) *GormEngine
+	Search(dest interface{}, query map[string]interface{}) *GormEngine
+	Offset(offset int) *GormEngine
+	Limit(limit int) *GormEngine
 }
 
-type databaseActions interface {
+type Crud interface {
 	Creator
 	Reader
+}
+
+type DatabaseActions interface {
+	Crud
 	Error() error
 	AutoMigrate(dst ...interface{}) error
 }
 
 type GormEngine struct {
-	gorm *gorm.DB
+	Gorm *gorm.DB
 }
 
 func (g *GormEngine) Error() error {
-	return g.gorm.Error
+	return g.Gorm.Error
 }
 
-func (g *GormEngine) Create(value interface{}) databaseActions { //nolint: ireturn
-	g.gorm = g.gorm.Create(value)
+func (g *GormEngine) Create(value interface{}) *GormEngine {
+	g.Gorm = g.Gorm.Create(value)
 
 	return g
 }
 
-func (g *GormEngine) First(dest interface{}, conds ...interface{}) databaseActions { //nolint: ireturn
-	g.gorm = g.gorm.First(dest, conds...)
+func (g *GormEngine) First(dest interface{}, conds ...interface{}) *GormEngine {
+	g.Gorm = g.Gorm.First(dest, conds...)
 
 	return g
 }
 
 func (g *GormEngine) AutoMigrate(dst ...interface{}) error {
-	err := g.gorm.AutoMigrate(dst...)
+	err := g.Gorm.AutoMigrate(dst...)
 
 	if err != nil {
 		return fmt.Errorf("error migrating %w", err)
@@ -71,14 +75,14 @@ func (g *GormEngine) AutoMigrate(dst ...interface{}) error {
 	return nil
 }
 
-func (g *GormEngine) Find(dest interface{}, conds ...interface{}) databaseActions { //nolint: ireturn
-	g.gorm = g.gorm.Where(conds).Find(dest)
+func (g *GormEngine) Find(dest interface{}, conds ...interface{}) *GormEngine {
+	g.Gorm = g.Gorm.Where(conds).Find(dest)
 
 	return g
 }
 
-func (g *GormEngine) Search(dest interface{}, query map[string]interface{}) databaseActions { //nolint: ireturn
-	g.gorm = g.gorm.Where(query).Find(dest)
+func (g *GormEngine) Search(dest interface{}, query map[string]interface{}) *GormEngine {
+	g.Gorm = g.Gorm.Where(query).Find(dest)
 
 	return g
 }
@@ -91,7 +95,7 @@ func (g *GormEngine) MockData() error {
 		return fmt.Errorf("error reading mock file %w", err)
 	}
 
-	txExecution := g.gorm.Exec(string(sqlScriptBytes))
+	txExecution := g.Gorm.Exec(string(sqlScriptBytes))
 
 	if txExecution.Error != nil {
 		return fmt.Errorf("error executing mock file %w", txExecution.Error)
@@ -100,14 +104,14 @@ func (g *GormEngine) MockData() error {
 	return nil
 }
 
-func (g *GormEngine) Offset(offset int) databaseActions { //nolint: ireturn
-	g.gorm = g.gorm.Offset(offset)
+func (g *GormEngine) Offset(offset int) *GormEngine {
+	g.Gorm = g.Gorm.Offset(offset)
 
 	return g
 }
 
-func (g *GormEngine) Limit(limit int) databaseActions { //nolint: ireturn
-	g.gorm = g.gorm.Limit(limit)
+func (g *GormEngine) Limit(limit int) *GormEngine {
+	g.Gorm = g.Gorm.Limit(limit)
 
 	return g
 }
