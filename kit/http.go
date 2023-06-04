@@ -47,7 +47,7 @@ type PageKey string
 
 const (
 	// PageIDKey refers to the context key that stores the next page id
-	PageIDKey = PageKey("page_id")
+	PageIDKey = PageKey("page")
 )
 
 // Pagination Thanks to https://github.com/jonnylangefeld/go-api/blob/v1.0.0/pkg/middelware/pagination.go !
