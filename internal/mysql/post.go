@@ -8,12 +8,12 @@ import (
 	"tuiter.com/api/pkg/post"
 )
 
-func NewPostRepository(creator DatabaseActions) *PostRepository {
+func NewPostRepository(creator *GormEngine) *PostRepository {
 	return &PostRepository{database: creator}
 }
 
 type PostRepository struct {
-	database DatabaseActions
+	database *GormEngine
 }
 
 func (r *PostRepository) Create(_ context.Context, post *post.Post) error {
@@ -27,7 +27,7 @@ func (r *PostRepository) Create(_ context.Context, post *post.Post) error {
 }
 
 func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*post.Post, error) {
-	var res []*post.Post
+	res := make([]*post.Post, 0)
 
 	pageNumber, _ := strconv.Atoi(pageID)
 

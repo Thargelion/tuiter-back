@@ -4,17 +4,17 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	post2 "tuiter.com/api/pkg/post"
+	"tuiter.com/api/pkg/post"
 )
 
-func NewPostRouter(repository post2.Repository) *Router {
-	return &Router{
+func NewPostRouter(repository post.Repository) *PostRouter {
+	return &PostRouter{
 		repo: repository,
 	}
 }
 
 type postPayload struct {
-	*post2.Post
+	*post.Post
 }
 
 func (u *postPayload) Bind(_ *http.Request) error {
@@ -29,21 +29,21 @@ func (u *postPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
 	return nil
 }
 
-func newPostList(posts []*post2.Post) []render.Renderer {
+func newPostList(posts []*post.Post) []render.Renderer {
 	var list []render.Renderer
 
-	for _, posts := range posts {
-		list = append(list, &postPayload{posts})
+	for _, data := range posts {
+		list = append(list, &postPayload{data})
 	}
 
 	return list
 }
 
-type Router struct {
-	repo post2.Repository
+type PostRouter struct {
+	repo post.Repository
 }
 
-func (r *Router) FindAll(writer http.ResponseWriter, request *http.Request) {
+func (r *PostRouter) Search(writer http.ResponseWriter, request *http.Request) {
 	pageID := request.URL.Query().Get(string(PageIDKey))
 	posts, err := r.repo.ListByPage(request.Context(), pageID)
 
@@ -62,7 +62,7 @@ func (r *Router) FindAll(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (r *Router) CreatePost(writer http.ResponseWriter, request *http.Request) {
+func (r *PostRouter) CreatePost(writer http.ResponseWriter, request *http.Request) {
 	payload := &postPayload{}
 	if err := render.Bind(request, payload); err != nil {
 		err := render.Render(writer, request, ErrInvalidRequest(err))

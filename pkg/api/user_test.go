@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"tuiter.com/api/api"
 	"tuiter.com/api/pkg"
+	"tuiter.com/api/pkg/api"
 	"tuiter.com/api/pkg/user"
 )
 

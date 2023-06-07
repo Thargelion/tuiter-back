@@ -5,5 +5,5 @@ import (
 )
 
 type Repository interface {
-	ListByPage(ctx context.Context, pageID string) ([]*UserPost, error)
+	ListByPage(ctx context.Context, pageNumber int, userID int) ([]*UserPost, error)
 }
