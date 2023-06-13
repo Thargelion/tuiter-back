@@ -16,7 +16,7 @@ make local.up
 
 This will run the required mysql database.
 
-To execute the server, run: 
+To execute the server, run:
 
 ```shell
 go build -o out/tuiter-back ./cmd/tuiter/main.go && ./out/tuiter-back

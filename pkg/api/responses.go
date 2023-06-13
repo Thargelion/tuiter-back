@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/go-chi/render"
 	"net/http"
+
+	"github.com/go-chi/render"
 )
 
 type Response struct {
@@ -10,14 +11,15 @@ type Response struct {
 	Message        string `json:"message"`
 }
 
-func NewResponse(statusCode int, message string) render.Renderer {
+func newResponse(statusCode int, message string) *Response {
 	return &Response{
 		HTTPStatusCode: statusCode,
 		Message:        message,
 	}
 }
 
-func (response *Response) Render(w http.ResponseWriter, r *http.Request) error {
+func (response *Response) Render(_ http.ResponseWriter, r *http.Request) error {
 	render.Status(r, response.HTTPStatusCode)
+
 	return nil
 }
