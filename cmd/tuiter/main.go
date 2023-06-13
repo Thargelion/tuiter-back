@@ -8,10 +8,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"tuiter.com/api/avatar"
 	"tuiter.com/api/internal/logging"
 	"tuiter.com/api/internal/mysql"
 	"tuiter.com/api/pkg/api"
+	"tuiter.com/api/pkg/avatar"
 	"tuiter.com/api/pkg/post"
 	"tuiter.com/api/pkg/user"
 )

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"tuiter.com/api/avatar"
+	"tuiter.com/api/pkg/avatar"
 )
 
 type UseCases interface {
