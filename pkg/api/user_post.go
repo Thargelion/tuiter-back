@@ -100,6 +100,48 @@ func (u *UserPostRouter) AddLike(writer http.ResponseWriter, request *http.Reque
 	_ = render.Render(writer, request, &userPostPayload{userPost})
 }
 
+func (u *UserPostRouter) RemoveLike(writer http.ResponseWriter, request *http.Request) {
+	payload := &like{}
+	if err := render.Bind(request, payload); err != nil {
+		u.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+		err := render.Render(writer, request, ErrInvalidRequest(err))
+
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	err := u.postRepository.RemoveLike(request.Context(), payload.TuitID, payload.UserID)
+
+	if err != nil {
+		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
+		if err != nil {
+			u.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+
+			return
+		}
+
+		return
+	}
+
+	userPost, err2 := u.userPostRepository.GetByID(request.Context(), payload.UserID, payload.TuitID)
+
+	if err2 != nil {
+		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
+		if err != nil {
+			u.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+
+			return
+		}
+
+		return
+	}
+
+	_ = render.Render(writer, request, &userPostPayload{userPost})
+}
+
 type like struct {
 	UserID int `json:"user_id"`
 	TuitID int `json:"tuit_id"`

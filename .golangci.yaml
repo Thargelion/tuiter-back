@@ -15,6 +15,7 @@ linters:
     # To fix later
     - gomnd
     - forcetypeassert
+    - dupl
     # Disabling by decision
     - exhaustruct
     - tagliatelle

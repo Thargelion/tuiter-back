@@ -78,7 +78,7 @@ type WrapperErrorRenderer struct {
 }
 
 type ErrorRenderer interface {
-	RenderError(err error) Renderer
+	RenderError(err error) *ErrResponse
 }
 
 func (e *WrapperErrorRenderer) RenderError(err error) *ErrResponse {

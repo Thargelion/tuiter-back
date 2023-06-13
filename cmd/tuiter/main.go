@@ -77,6 +77,9 @@ func addRoutes(chiRouter *chi.Mux) {
 		router.Route("/likes", func(r chi.Router) {
 			r.Post("/", userPostRouter.AddLike)
 		})
+		router.Route("/dislikes", func(r chi.Router) {
+			r.Post("/", userPostRouter.RemoveLike)
+		})
 	})
 }
 

@@ -84,6 +84,44 @@ func (r *PostRepository) AddLike(ctx context.Context, postID int, userID int) er
 	return mainTx.Commit().Error
 }
 
+func (r *PostRepository) RemoveLike(ctx context.Context, postID int, userID int) error {
+	selectedPost, err := r.FindByID(ctx, postID)
+	if err != nil {
+		r.logger.Printf(ctx, "post not found when adding like %v", err)
+
+		return fmt.Errorf("post not found when adding like %w", err)
+	}
+	selectedPost.Likes--
+
+	mainTx := r.database.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			mainTx.Rollback()
+		}
+	}()
+
+	err = mainTx.Save(selectedPost).Error
+	if err != nil {
+		mainTx.Rollback()
+		r.logger.Printf(ctx, "syserror from database when adding like %v", err)
+
+		return fmt.Errorf("syserror from database when adding like %w", err)
+	}
+
+	err = mainTx.Exec(`
+		DELETE FROM post_likes WHERE (post_likes.post_id = ? AND post_likes.user_id = ?)
+		`, postID, userID).Error
+	if err != nil {
+		mainTx.Rollback()
+		r.logger.Printf(ctx, "syserror from database when registering author and tuit %v", err)
+
+		return fmt.Errorf("syserror from database when registering author and tuit %w", err)
+	}
+
+	return mainTx.Commit().Error
+}
+
 func (r *PostRepository) FindByID(ctx context.Context, postID int) (*post.Post, error) {
 	res := &post.Post{}
 	txResult := r.database.First(res, postID)
