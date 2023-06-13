@@ -4,47 +4,60 @@ import (
 	"context"
 	"fmt"
 
+	"gorm.io/gorm"
+	"tuiter.com/api/internal/logging"
 	"tuiter.com/api/pkg/user"
 )
 
-func NewUserRepository(creator DatabaseActions) *UserRepository {
-	return &UserRepository{database: creator}
+func NewUserRepository(creator *gorm.DB, logger logging.ContextualLogger) *UserRepository {
+	return &UserRepository{database: creator, logger: logger}
 }
 
 type UserRepository struct {
-	database DatabaseActions
+	database *gorm.DB
+	logger   logging.ContextualLogger
 }
 
-func (r *UserRepository) Search(_ context.Context, query map[string]interface{}) ([]*user.User, error) {
-	var txResult DatabaseActions
+func (r *UserRepository) Search(ctx context.Context, query map[string]interface{}) ([]*user.User, error) {
+	var txResult *gorm.DB
 
 	var res []*user.User
 
 	if len(query) == 0 {
 		txResult = r.database.Find(&res)
 	} else {
-		txResult = r.database.Search(&res, query)
+		txResult = r.database.Find(&res, query)
 	}
 
-	if txResult.Error() != nil {
-		return nil, fmt.Errorf("error searching users on database %w", txResult.Error())
+	if txResult.Error != nil {
+		r.logger.Printf(ctx, "syserror searching users on database %v", txResult.Error)
+
+		return nil, fmt.Errorf("syserror searching users on database %w", txResult.Error)
 	}
 
 	return res, nil
 }
 
-func (r *UserRepository) FindUserByID(_ context.Context, iD string) (*user.User, error) {
+func (r *UserRepository) FindUserByID(ctx context.Context, userID string) (*user.User, error) {
 	var res = &user.User{}
-	txResult := r.database.First(&res, "id = ?", iD)
+	txResult := r.database.First(&res, "id = ?", userID)
 
-	return res, fmt.Errorf("error finding user on database %s %w", iD, txResult.Error())
+	if txResult.Error != nil {
+		r.logger.Printf(ctx, "syserror finding user on database %s %v", userID, txResult.Error)
+
+		return nil, fmt.Errorf("syserror finding user on database %s %w", userID, txResult.Error)
+	}
+
+	return res, nil
 }
 
-func (r *UserRepository) Create(_ context.Context, user *user.User) (*user.User, error) {
+func (r *UserRepository) Create(ctx context.Context, user *user.User) (*user.User, error) {
 	txResult := r.database.Create(user)
 
-	if txResult.Error() != nil {
-		return nil, fmt.Errorf("error creating user on database %w", txResult.Error())
+	if txResult.Error != nil {
+		r.logger.Printf(ctx, "syserror creating user on database %v", txResult.Error)
+
+		return nil, fmt.Errorf("syserror creating user on database %w", txResult.Error)
 	}
 
 	return user, nil

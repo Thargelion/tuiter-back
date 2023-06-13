@@ -2,14 +2,16 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"tuiter.com/api/avatar"
+	"tuiter.com/api/internal/logging"
 	"tuiter.com/api/internal/mysql"
-	api2 "tuiter.com/api/pkg/api"
+	"tuiter.com/api/pkg/api"
 	"tuiter.com/api/pkg/post"
 	"tuiter.com/api/pkg/user"
 )
@@ -19,9 +21,10 @@ func main() {
 	chiRouter := chi.NewRouter()
 	chiRouter.Use(middleware.Recoverer)
 	chiRouter.Use(middleware.Timeout(5 * time.Second))
+	chiRouter.Use(api.RequestTagger) // Chi already has one -_-
 	chiRouter.Use(middleware.Logger)
 	chiRouter.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		api2.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
+		api.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
 	addRoutes(chiRouter)
 	printWelcomeMessage()
@@ -50,26 +53,29 @@ func addRoutes(chiRouter *chi.Mux) {
 		panic("failed to load location")
 	}
 	// Dependencies
-	userRepo := mysql.NewUserRepository(dataBase)
+	logger := logging.NewContextualLogger(log.Default())
+	userRepo := mysql.NewUserRepository(dataBase, logger)
 	avatarUseCases := avatar.NewAvatarUseCases()
-	userRouter := api2.NewUserRouter(user.NewUserUseCases(userRepo, avatarUseCases))
-	postRouter := api2.NewPostRouter(mysql.NewPostRepository(dataBase))
-	userPostRouter := api2.NewUserPostRouter(mysql.NewUserPostRepository(dataBase))
-	mockRouter := api2.NewMockRouter(dataBase)
+	mysqlHandler := mysql.NewErrorHandler()
+	postRepo := mysql.NewPostRepository(dataBase, logger)
+	errHandler := api.NewErrorsHandler(mysqlHandler)
+	userRouter := api.NewUserRouter(user.NewUserUseCases(userRepo, avatarUseCases), errHandler, logger)
+	postRouter := api.NewPostRouter(postRepo, errHandler, logger)
+	userPostRouter := api.NewUserPostRouter(mysql.NewUserPostRepository(dataBase, logger), postRepo, errHandler, logger)
 
 	chiRouter.Route("/v1", func(router chi.Router) {
 		router.Route("/users", func(r chi.Router) {
 			r.Post("/", userRouter.CreateUser)
 			r.Get("/{id}", userRouter.FindUserByID)
 			r.Get("/", userRouter.Search)
-			r.With(api2.Pagination).Get("/{id}/tuits", userPostRouter.Search)
+			r.With(api.Pagination).Get("/{id}/tuits", userPostRouter.Search)
 		})
 		router.Route("/tuits", func(r chi.Router) {
-			r.With(api2.Pagination).Get("/", postRouter.Search)
+			r.With(api.Pagination).Get("/", postRouter.Search)
 			r.Post("/", postRouter.CreatePost)
 		})
-		router.Route("/mock", func(r chi.Router) {
-			r.Post("/", mockRouter.FillMockData)
+		router.Route("/likes", func(r chi.Router) {
+			r.Post("/", userPostRouter.AddLike)
 		})
 	})
 }

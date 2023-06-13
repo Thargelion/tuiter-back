@@ -5,12 +5,24 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/render"
 )
 
 type Mocker interface {
 	MockData() error
+}
+
+type Renderer interface {
+	Render(w http.ResponseWriter, r *http.Request) error
+}
+
+type commonPayload struct {
+	ID        uint      `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	DeletedAt time.Time `json:"deleted_at"`
 }
 
 type MockRouter struct {
@@ -29,7 +41,7 @@ func (m *MockRouter) FillMockData(responseWriter http.ResponseWriter, request *h
 		err := render.Render(responseWriter, request, &ErrResponse{
 			Err:            err,
 			HTTPStatusCode: http.StatusInternalServerError,
-			StatusText:     "Internal server error",
+			StatusText:     "Internal server syserror",
 			ErrorText:      err.Error(),
 		})
 		if err != nil {

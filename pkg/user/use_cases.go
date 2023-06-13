@@ -34,7 +34,7 @@ func (c *Service) Search(ctx context.Context, query map[string]interface{}) ([]*
 	users, err := c.userRepo.Search(ctx, query)
 
 	if err != nil {
-		return nil, fmt.Errorf("error searching for a user on repository: %w", err)
+		return nil, fmt.Errorf("syserror searching for a user on repository: %w", err)
 	}
 
 	return users, nil
@@ -44,7 +44,7 @@ func (c *Service) FindUserByID(ctx context.Context, id string) (*User, error) {
 	user, err := c.userRepo.FindUserByID(ctx, id)
 
 	if err != nil {
-		return nil, fmt.Errorf("error searching for a user on repository: %w", err)
+		return nil, fmt.Errorf("syserror searching for a user on repository: %w", err)
 	}
 
 	return user, nil
@@ -56,7 +56,7 @@ func (c *Service) Create(ctx context.Context, user *User) (*User, error) {
 	newUser, err := c.userRepo.Create(ctx, user)
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating a user on repository: %w", err)
+		return nil, fmt.Errorf("syserror creating a user on repository: %w", err)
 	}
 
 	return newUser, nil

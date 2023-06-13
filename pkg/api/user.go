@@ -10,19 +10,24 @@ import (
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/schema"
+	"tuiter.com/api/internal/logging"
 	"tuiter.com/api/pkg/user"
 )
 
 var errInvalidRequest = errors.New("missing required fields")
 
-func NewUserRouter(useCases user.UseCases) *UserRouter {
+func NewUserRouter(useCases user.UseCases, errRenderer ErrorRenderer, logger logging.ContextualLogger) *UserRouter {
 	return &UserRouter{
-		useCases: useCases,
+		useCases:      useCases,
+		errorRenderer: errRenderer,
+		logger:        logger,
 	}
 }
 
 type UserRouter struct {
-	useCases user.UseCases
+	useCases      user.UseCases
+	errorRenderer ErrorRenderer
+	logger        logging.ContextualLogger
 }
 
 func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
@@ -36,8 +41,9 @@ func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
 	err := decoder.Decode(&filter, queryValues)
 
 	if err != nil {
-		err := render.Render(writer, request, ErrInvalidRequest(err))
+		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
+			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
 			return
 		}
 
@@ -49,8 +55,9 @@ func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
 	users, err := r.useCases.Search(request.Context(), query)
 
 	if err != nil {
-		err := render.Render(writer, request, ErrInvalidRequest(err))
+		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
+			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
 			return
 		}
 
@@ -59,6 +66,7 @@ func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
 
 	err = render.RenderList(writer, request, newUserList(users))
 	if err != nil {
+		r.logger.Printf(request.Context(), "syserror rendering user list: %v", err)
 		return
 	}
 }
@@ -68,16 +76,18 @@ func (r *UserRouter) FindUserByID(writer http.ResponseWriter, request *http.Requ
 	userFound, err := r.useCases.FindUserByID(request.Context(), id)
 
 	if err != nil {
-		err := render.Render(writer, request, ErrInvalidRequest(err))
+		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
+			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
 			return
 		}
 
 		return
 	}
 
-	err = render.Render(writer, request, &userPayload{userFound})
+	err = render.Render(writer, request, newUserPayload(userFound))
 	if err != nil {
+		r.logger.Printf(request.Context(), "syserror rendering user: %v", err)
 		return
 	}
 }
@@ -85,7 +95,7 @@ func (r *UserRouter) FindUserByID(writer http.ResponseWriter, request *http.Requ
 func (r *UserRouter) CreateUser(writer http.ResponseWriter, request *http.Request) {
 	payload := &userCreatePayload{}
 	if err := render.Bind(request, payload); err != nil {
-		err := render.Render(writer, request, ErrInvalidRequest(err))
+		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
 			return
 		}
@@ -95,7 +105,7 @@ func (r *UserRouter) CreateUser(writer http.ResponseWriter, request *http.Reques
 
 	newUser, err := r.useCases.Create(request.Context(), payload.ToUser())
 	if err != nil {
-		err := render.Render(writer, request, ErrInvalidRequest(err))
+		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
 			return
 		}
@@ -103,7 +113,7 @@ func (r *UserRouter) CreateUser(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	err = render.Render(writer, request, &userPayload{newUser})
+	err = render.Render(writer, request, newUserPayload(newUser))
 	if err != nil {
 		return
 	}
@@ -122,7 +132,21 @@ func (u *userCreatePayload) ToUser() *user.User {
 }
 
 type userPayload struct {
-	*user.User
+	commonPayload
+	Name      string `json:"name"`
+	AvatarURL string `json:"avatar_url"`
+}
+
+func newUserPayload(user *user.User) *userPayload {
+	return &userPayload{
+		commonPayload: commonPayload{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+		Name:      user.Name,
+		AvatarURL: user.AvatarURL,
+	}
 }
 
 func (u *userCreatePayload) Bind(_ *http.Request) error {
@@ -141,10 +165,6 @@ type userFilter struct {
 }
 
 func (u *userPayload) Bind(_ *http.Request) error {
-	if u.User == nil {
-		return errInvalidRequest
-	}
-
 	return nil
 }
 
@@ -156,7 +176,7 @@ func newUserList(users []*user.User) []render.Renderer {
 	var list []render.Renderer
 
 	for _, u := range users {
-		list = append(list, &userPayload{u})
+		list = append(list, newUserPayload(u))
 	}
 
 	return list
