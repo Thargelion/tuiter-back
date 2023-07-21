@@ -9,6 +9,6 @@ type UserPost struct {
 	Author    string `json:"author"`
 	AvatarURL string `json:"avatar_url"`
 	Likes     int    `json:"likes"`
-	Liked     bool   `json:"liked"`
+	Liked     int    `json:"liked"`
 	Date      string `json:"date"`
 }

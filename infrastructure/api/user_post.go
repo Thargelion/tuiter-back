@@ -7,12 +7,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"tuiter.com/api/internal/logging"
-	"tuiter.com/api/pkg/post"
-	"tuiter.com/api/pkg/userpost"
+	"tuiter.com/api/internal/post"
+	userpost2 "tuiter.com/api/internal/userpost"
 )
 
 func NewUserPostRouter(
-	userPostRepository userpost.Repository,
+	userPostRepository userpost2.Repository,
 	postRepo post.Repository,
 	errRenderer ErrorRenderer,
 	logger logging.ContextualLogger,
@@ -26,7 +26,7 @@ func NewUserPostRouter(
 }
 
 type UserPostRouter struct {
-	userPostRepository userpost.Repository
+	userPostRepository userpost2.Repository
 	postRepository     post.Repository
 	errorRenderer      ErrorRenderer
 	logger             logging.ContextualLogger
@@ -97,7 +97,7 @@ func (u *UserPostRouter) AddLike(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	_ = render.Render(writer, request, &userPostPayload{userPost})
+	_ = render.Render(writer, request, &userPostPayload{userPost, userPost != nil})
 }
 
 func (u *UserPostRouter) RemoveLike(writer http.ResponseWriter, request *http.Request) {
@@ -139,7 +139,7 @@ func (u *UserPostRouter) RemoveLike(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	_ = render.Render(writer, request, &userPostPayload{userPost})
+	_ = render.Render(writer, request, &userPostPayload{userPost, userPost != nil})
 }
 
 type like struct {
@@ -148,7 +148,8 @@ type like struct {
 }
 
 type userPostPayload struct {
-	*userpost.UserPost
+	*userpost2.UserPost
+	Liked bool `json:"liked"`
 }
 
 func (u *userPostPayload) Bind(_ *http.Request) error {
@@ -160,14 +161,16 @@ func (u *userPostPayload) Bind(_ *http.Request) error {
 }
 
 func (u *userPostPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
+	u.Liked = u.UserPost.Liked > 0
+
 	return nil
 }
 
-func newUserPostList(posts []*userpost.UserPost) []render.Renderer {
+func newUserPostList(posts []*userpost2.UserPost) []render.Renderer {
 	var list []render.Renderer
 
 	for _, userPost := range posts {
-		list = append(list, &userPostPayload{userPost})
+		list = append(list, &userPostPayload{userPost, userPost != nil})
 	}
 
 	return list

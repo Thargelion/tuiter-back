@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 	"tuiter.com/api/internal/logging"
-	"tuiter.com/api/pkg/userpost"
+	"tuiter.com/api/internal/userpost"
 )
 
 const (

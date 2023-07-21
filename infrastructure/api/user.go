@@ -11,7 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/schema"
 	"tuiter.com/api/internal/logging"
-	"tuiter.com/api/pkg/user"
+	"tuiter.com/api/internal/user"
 )
 
 var errInvalidRequest = errors.New("missing required fields")

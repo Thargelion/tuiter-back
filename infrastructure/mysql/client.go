@@ -6,7 +6,7 @@ import (
 )
 
 func Connect() *gorm.DB {
-	database, err := gorm.Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/tuiter?parseTime=true"), &gorm.Config{})
+	database, err := gorm.Open(mysql.Open("root@tcp(127.0.0.1:3306)/tuiter?parseTime=true"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}

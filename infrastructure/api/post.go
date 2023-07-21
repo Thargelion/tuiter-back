@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/render"
 	"tuiter.com/api/internal/logging"
-	"tuiter.com/api/pkg/post"
+	"tuiter.com/api/internal/post"
 )
 
 func NewPostRouter(repository post.Repository, errRenderer ErrorRenderer, logger logging.ContextualLogger) *PostRouter {

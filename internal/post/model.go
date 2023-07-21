@@ -2,7 +2,7 @@ package post
 
 import (
 	"gorm.io/gorm"
-	"tuiter.com/api/pkg/user"
+	"tuiter.com/api/internal/user"
 )
 
 type Post struct {

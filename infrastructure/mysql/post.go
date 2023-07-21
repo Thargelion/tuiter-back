@@ -7,7 +7,7 @@ import (
 
 	"gorm.io/gorm"
 	"tuiter.com/api/internal/logging"
-	"tuiter.com/api/pkg/post"
+	"tuiter.com/api/internal/post"
 )
 
 func NewPostRepository(creator *gorm.DB, logger logging.ContextualLogger) *PostRepository {

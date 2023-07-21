@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 	"tuiter.com/api/internal/logging"
-	"tuiter.com/api/pkg/user"
+	"tuiter.com/api/internal/user"
 )
 
 func NewUserRepository(creator *gorm.DB, logger logging.ContextualLogger) *UserRepository {
