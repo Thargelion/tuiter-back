@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -42,18 +44,20 @@ func main() {
 }
 
 func addRoutes(chiRouter *chi.Mux) {
-	dataBase := mysql2.Connect()
-	err := dataBase.AutoMigrate(&user2.User{}, &post.Post{})
+	dbUser := os.Getenv("MYSQL_USER")
+	dbPass := os.Getenv("MYSQL_PASS")
+	dbHost := os.Getenv("MYSQL_HOST")
+	dbName := os.Getenv("MYSQL_DB")
+	dataBase := mysql2.Connect(dbUser, dbPass, dbHost, dbName)
+	logger := logging.NewContextualLogger(log.Default())
 
+	err := dataBase.AutoMigrate(&user2.User{}, &post.Post{})
 	if err != nil {
+		logger.Printf(context.Background(), err.Error())
 		panic("failed to migrate")
 	}
 
-	if err != nil {
-		panic("failed to load location")
-	}
 	// Dependencies
-	logger := logging.NewContextualLogger(log.Default())
 	userRepo := mysql2.NewUserRepository(dataBase, logger)
 	avatarUseCases := avatar.NewAvatarUseCases()
 	mysqlHandler := mysql2.NewErrorHandler()
