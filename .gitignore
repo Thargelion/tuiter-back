@@ -20,4 +20,9 @@
 # Go workspace file
 go.work
 
+out
+
 .idea
+
+# DDBB Local Volume
+database_DATA
