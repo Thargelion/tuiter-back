@@ -7,7 +7,7 @@ require (
 	github.com/go-chi/render v1.0.2
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/google/uuid v1.3.0
-	github.com/gorilla/schema v1.2.0
+	github.com/gorilla/schema v1.4.1
 	golang.org/x/net v0.23.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.1
