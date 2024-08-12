@@ -30,8 +30,9 @@ func main() {
 	})
 	addRoutes(chiRouter)
 	port := os.Getenv("PORT")
+	addr := fmt.Sprintf(":%s", port)
 	server := &http.Server{
-		Addr:              port,
+		Addr:              addr,
 		ReadHeaderTimeout: 3 * time.Second,
 		Handler:           chiRouter,
 	}
