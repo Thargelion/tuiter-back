@@ -88,9 +88,9 @@ func addRoutes(chiRouter *chi.Mux) {
 	})
 }
 
-func printWelcomeMessage() {
-	fmt.Print("Server running on port 3000\n") //nolint:forbidigo
-	fmt.Print("" +                             //nolint:forbidigo
+func printWelcomeMessage(port int) {
+	fmt.Printf("Server running on port %d!\n", port) //nolint:forbidigo
+	fmt.Print("" +                                   //nolint:forbidigo
 		"⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣤⣄⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄\n" +
 		"⠄⠄⠄⠄⠄⠄⠄⢀⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣤⡀⠄⠄⠄⠄⠄\n" +
 		"⠄⠄⠄⠄⠄⢀⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣆⠄⠄⠄⠄\n" +
