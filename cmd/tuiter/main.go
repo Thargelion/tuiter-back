@@ -29,14 +29,14 @@ func main() {
 		api2.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
 	addRoutes(chiRouter)
-	printWelcomeMessage()
-
+	port := os.Getenv("PORT")
 	server := &http.Server{
-		Addr:              ":3000",
+		Addr:              port,
 		ReadHeaderTimeout: 3 * time.Second,
 		Handler:           chiRouter,
 	}
 
+	printWelcomeMessage()
 	err := server.ListenAndServe()
 	if err != nil {
 		panic(err)
