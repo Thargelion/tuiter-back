@@ -37,7 +37,7 @@ func main() {
 		Handler:           chiRouter,
 	}
 
-	printWelcomeMessage()
+	printWelcomeMessage(port)
 	err := server.ListenAndServe()
 	if err != nil {
 		panic(err)
@@ -88,8 +88,8 @@ func addRoutes(chiRouter *chi.Mux) {
 	})
 }
 
-func printWelcomeMessage(port int) {
-	fmt.Printf("Server running on port %d!\n", port) //nolint:forbidigo
+func printWelcomeMessage(port string) {
+	fmt.Printf("Server running on port %s!\n", port) //nolint:forbidigo
 	fmt.Print("" +                                   //nolint:forbidigo
 		"⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣤⣄⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄\n" +
 		"⠄⠄⠄⠄⠄⠄⠄⢀⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣤⡀⠄⠄⠄⠄⠄\n" +
