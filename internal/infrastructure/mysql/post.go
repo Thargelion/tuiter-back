@@ -10,6 +10,8 @@ import (
 	"tuiter.com/api/pkg/logging"
 )
 
+const defaultPageSize = 100
+
 func NewTuitRepository(creator *gorm.DB, logger logging.ContextualLogger) *PostRepository {
 	return &PostRepository{database: creator, logger: logger}
 }
@@ -38,8 +40,8 @@ func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.P
 		pageNumber = 1
 	}
 
-	offset := (pageNumber - 1) * 100
-	txResult := r.database.Limit(100).Offset(offset).Find(&res)
+	offset := (pageNumber - 1) * defaultPageSize
+	txResult := r.database.Limit(defaultPageSize).Offset(offset).Find(&res)
 
 	if txResult.Error != nil {
 		return nil, fmt.Errorf("syserror from database when listing posts by page %w", txResult.Error)
@@ -55,6 +57,7 @@ func (r *PostRepository) AddLike(ctx context.Context, postID int, userID int) er
 
 		return fmt.Errorf("tuit not found when adding like %w", err)
 	}
+
 	selectedPost.Likes++
 
 	mainTx := r.database.Begin()
@@ -91,6 +94,7 @@ func (r *PostRepository) RemoveLike(ctx context.Context, postID int, userID int)
 
 		return fmt.Errorf("tuit not found when adding like %w", err)
 	}
+
 	selectedPost.Likes--
 
 	mainTx := r.database.Begin()

@@ -8,7 +8,11 @@ import (
 	"tuiter.com/api/pkg/logging"
 )
 
-func NewTuitHandler(repository tuit.Repository, errRenderer ErrorRenderer, logger logging.ContextualLogger) *TuitHandler {
+func NewTuitHandler(
+	repository tuit.Repository,
+	errRenderer ErrorRenderer,
+	logger logging.ContextualLogger,
+) *TuitHandler {
 	return &TuitHandler{
 		repo:          repository,
 		errorRenderer: errRenderer,
@@ -90,7 +94,7 @@ func newPostList(posts []*tuit.Post) []render.Renderer {
 // @Produce json
 // @Param page_id query string true "Page ID"
 // @Success 200 {array} tuitPayload
-// @Router /tuits [get]
+// @Router /tuits [get].
 func (r *TuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
 	pageID := request.URL.Query().Get(string(PageIDKey))
 	posts, err := r.repo.ListByPage(request.Context(), pageID)
@@ -133,7 +137,7 @@ func (r *TuitHandler) CreateTuit(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err = render.Render(writer, request, newResponse(201, "Post created"))
+	err = render.Render(writer, request, newResponse(http.StatusCreated, "Post created"))
 	if err != nil {
 		return
 	}

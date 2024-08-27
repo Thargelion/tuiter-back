@@ -69,9 +69,11 @@ const (
 // Pagination middleware is used to extract the next page id from the url query.
 func Pagination(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
+		var err error
+
 		PageID := request.URL.Query().Get(string(PageIDKey))
 		intPageID := 0
-		var err error
+
 		if PageID != "" {
 			intPageID, err = strconv.Atoi(PageID)
 			if err != nil {
@@ -82,7 +84,9 @@ func Pagination(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		ctx := context.WithValue(request.Context(), PageIDKey, intPageID)
+
 		next.ServeHTTP(responseWriter, request.WithContext(ctx))
 	})
 }

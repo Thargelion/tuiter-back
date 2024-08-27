@@ -37,7 +37,7 @@ type UserTuitHandler struct {
 // @Param id path int true "User ID"
 // @Produce json
 // @Success 200 {array} userpost.UserPost
-// @Router /users/{id}/tuits [get]
+// @Router /users/{id}/tuits [get].
 func (l *UserTuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
 	page, err := strconv.Atoi(request.URL.Query().Get("page"))
 
