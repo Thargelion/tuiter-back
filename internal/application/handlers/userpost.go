@@ -28,6 +28,16 @@ type UserTuitHandler struct {
 	logger        logging.ContextualLogger
 }
 
+// Search Tuits From User godoc
+// @Summary Search Users' tuits
+// @Description Search Users Tuits will return a list of tuits from the user perspective. This means that the user will
+// see the tuits and if they liked them or not.
+// @Tags tuits
+// @Param page query int false "Page"
+// @Param id path int true "User ID"
+// @Produce json
+// @Success 200 {array} userpost.UserPost
+// @Router /users/{id}/tuits [get]
 func (l *UserTuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
 	page, err := strconv.Atoi(request.URL.Query().Get("page"))
 
