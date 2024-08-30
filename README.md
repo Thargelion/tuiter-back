@@ -22,6 +22,12 @@ To execute the server, run:
 go build -o out/tuiter-back ./cmd/tuiter/main.go && ./out/tuiter-back
 ```
 
+## Generate Documentation
+```shell
+make docs.generate
+```
+
+
 ## Scaffolding
 
 The project is built loosely based on Package Oriented Design. As such, the API domains are featured as packages at the

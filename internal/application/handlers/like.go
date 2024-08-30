@@ -22,6 +22,15 @@ type LikeHandler struct {
 	liker         userpost.Liker
 }
 
+// AddLike godoc
+// @Summary Add a like to a tuit
+// @Description Add a like to a tuit
+// @Tags likes
+// @Accept json
+// @Produce json
+// @Param like body like true "Like"
+// @Success 200 {object} userPostPayload
+// @Router /likes [post].
 func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request) {
 	payload := &like{}
 	if err := render.Bind(request, payload); err != nil {
@@ -35,20 +44,30 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	up, err := l.liker.AddLike(request.Context(), payload.UserID, payload.TuitID)
+	userPost, err := l.liker.AddLike(request.Context(), payload.UserID, payload.TuitID)
 
 	if err != nil {
 		_ = render.Render(writer, request, l.errorRenderer.RenderError(err))
+
 		return
 	}
 
-	err = render.Render(writer, request, &userPostPayload{up})
+	err = render.Render(writer, request, &userPostPayload{userPost})
 
 	if err != nil {
 		l.logger.Printf(request.Context(), "syserror rendering response: %v", err)
 	}
 }
 
+// RemoveLike godoc
+// @Summary Remove a like from a tuit
+// @Description Remove a like from a tuit
+// @Tags likes
+// @Accept json
+// @Produce json
+// @Param like body like true "Like"
+// @Success 200 {object} userPostPayload
+// @Router /likes [delete].
 func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Request) {
 	payload := &like{}
 	if err := render.Bind(request, payload); err != nil {
@@ -62,7 +81,7 @@ func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	up, err := l.liker.RemoveLike(request.Context(), payload.UserID, payload.TuitID)
+	userPost, err := l.liker.RemoveLike(request.Context(), payload.UserID, payload.TuitID)
 
 	if err != nil {
 		err := render.Render(writer, request, l.errorRenderer.RenderError(err))
@@ -75,5 +94,5 @@ func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	_ = render.Render(writer, request, &userPostPayload{up})
+	_ = render.Render(writer, request, &userPostPayload{userPost})
 }

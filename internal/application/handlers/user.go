@@ -16,21 +16,21 @@ import (
 
 var errInvalidRequest = errors.New("missing required fields")
 
-func NewUserHandler(useCases user.UseCases, errRenderer ErrorRenderer, logger logging.ContextualLogger) *UserRouter {
-	return &UserRouter{
+func NewUserHandler(useCases user.UseCases, errRenderer ErrorRenderer, logger logging.ContextualLogger) *User {
+	return &User{
 		useCases:      useCases,
 		errorRenderer: errRenderer,
 		logger:        logger,
 	}
 }
 
-type UserRouter struct {
+type User struct {
 	useCases      user.UseCases
 	errorRenderer ErrorRenderer
 	logger        logging.ContextualLogger
 }
 
-func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
+func (r *User) Search(writer http.ResponseWriter, request *http.Request) {
 	var filter userFilter
 
 	var decoder = schema.NewDecoder()
@@ -44,6 +44,7 @@ func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
 		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
 			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+
 			return
 		}
 
@@ -58,6 +59,7 @@ func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
 		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
 			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+
 			return
 		}
 
@@ -67,11 +69,21 @@ func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
 	err = render.RenderList(writer, request, newUserList(users))
 	if err != nil {
 		r.logger.Printf(request.Context(), "syserror rendering user list: %v", err)
+
 		return
 	}
 }
 
-func (r *UserRouter) FindUserByID(writer http.ResponseWriter, request *http.Request) {
+// FindUserByID godoc
+// @Summary Get a user by ID
+// @Description Get a user by ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} userPayload
+// @Router /users/{id} [get].
+func (r *User) FindUserByID(writer http.ResponseWriter, request *http.Request) {
 	id := chi.URLParam(request, "id")
 	userFound, err := r.useCases.FindUserByID(request.Context(), id)
 
@@ -79,6 +91,7 @@ func (r *UserRouter) FindUserByID(writer http.ResponseWriter, request *http.Requ
 		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
 			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+
 			return
 		}
 
@@ -88,11 +101,21 @@ func (r *UserRouter) FindUserByID(writer http.ResponseWriter, request *http.Requ
 	err = render.Render(writer, request, newUserPayload(userFound))
 	if err != nil {
 		r.logger.Printf(request.Context(), "syserror rendering user: %v", err)
+
 		return
 	}
 }
 
-func (r *UserRouter) CreateUser(writer http.ResponseWriter, request *http.Request) {
+// CreateUser Create Users godoc
+// @Summary Create a new user
+// @Description Create a new user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body userCreatePayload true "User"
+// @Success 201 {object} userPayload
+// @Router /users [post].
+func (r *User) CreateUser(writer http.ResponseWriter, request *http.Request) {
 	payload := &userCreatePayload{}
 	if err := render.Bind(request, payload); err != nil {
 		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
@@ -120,30 +143,27 @@ func (r *UserRouter) CreateUser(writer http.ResponseWriter, request *http.Reques
 }
 
 type userCreatePayload struct {
-	Name      string `json:"name" validate:"required"`
+	Name      string `json:"name"       validate:"required"`
 	AvatarURL string `json:"avatar_url"`
+	Email     string `json:"email"      validate:"required,email"`
 }
 
 func (u *userCreatePayload) ToUser() *user.User {
 	return &user.User{
 		Name:      u.Name,
 		AvatarURL: u.AvatarURL,
+		Email:     u.Email,
 	}
 }
 
 type userPayload struct {
-	commonPayload
 	Name      string `json:"name"`
 	AvatarURL string `json:"avatar_url"`
+	Email     string `json:"email"`
 }
 
 func newUserPayload(user *user.User) *userPayload {
 	return &userPayload{
-		commonPayload: commonPayload{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-		},
 		Name:      user.Name,
 		AvatarURL: user.AvatarURL,
 	}

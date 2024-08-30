@@ -6,10 +6,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+	_ "tuiter.com/api/cmd/tuiter/docs"
 	"tuiter.com/api/internal/application/handlers"
 	"tuiter.com/api/internal/application/router"
 	"tuiter.com/api/internal/application/services"
@@ -20,27 +24,65 @@ import (
 	"tuiter.com/api/pkg/logging"
 )
 
+const (
+	corsMaxAge        = 300
+	timeout           = 5 * time.Second
+	readHeaderTimeout = 3 * time.Second
+)
+
+// @title Tuiter API
+// @version 1
+// @description This is the API for Tuiter, a Twitter clone.
+// @Schemes https
+// @BasePath	/v1
+// @contact.email madepietro@unlam.edu.ar.
 func main() {
 	// Chi
+	port := os.Getenv("PORT")
+	addr := ":" + port
 	chiRouter := chi.NewRouter()
+	// Configure
 	chiRouter.Use(middleware.Recoverer)
-	chiRouter.Use(middleware.Timeout(5 * time.Second))
+	chiRouter.Use(middleware.Timeout(timeout))
 	chiRouter.Use(handlers.RequestTagger) // Chi already has one -_-
 	chiRouter.Use(middleware.Logger)
-	chiRouter.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+
+	workDir, _ := os.Getwd()
+	filesDir := http.Dir(filepath.Join(workDir, "data"))
+	// Add Globals
+	// Basic CORS
+	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
+	chiRouter.Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"https://*", "http://*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           corsMaxAge, // Maximum value not ignored by any of major browsers
+	}))
+	chiRouter.Get("/ping", func(w http.ResponseWriter, _ *http.Request) {
 		handlers.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
+	chiRouter.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"), // The url pointing to API definition
+	))
+
+	fileServerRouter := router.NewFileServer()
+	fileServerRouter.FileRoutes(chiRouter, "/files", filesDir)
 	addRoutes(chiRouter)
-	port := os.Getenv("PORT")
-	addr := fmt.Sprintf(":%s", port)
+
 	server := &http.Server{
 		Addr:              addr,
-		ReadHeaderTimeout: 3 * time.Second,
+		ReadHeaderTimeout: readHeaderTimeout,
 		Handler:           chiRouter,
 	}
 
-	printWelcomeMessage()
+	printWelcomeMessage(port)
+
 	err := server.ListenAndServe()
+
 	if err != nil {
 		panic(err)
 	}
@@ -91,9 +133,9 @@ func addRoutes(chiRouter *chi.Mux) {
 	})
 }
 
-func printWelcomeMessage() {
-	fmt.Print("Server running on port 3000\n") //nolint:forbidigo
-	fmt.Print("" +                             //nolint:forbidigo
+func printWelcomeMessage(port string) {
+	fmt.Printf("server running on port: %s. \n", port) //nolint:forbidigo
+	fmt.Print("" +                                     //nolint:forbidigo
 		"⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣤⣄⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄\n" +
 		"⠄⠄⠄⠄⠄⠄⠄⢀⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣤⡀⠄⠄⠄⠄⠄\n" +
 		"⠄⠄⠄⠄⠄⢀⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣆⠄⠄⠄⠄\n" +

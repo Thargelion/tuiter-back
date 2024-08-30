@@ -9,7 +9,7 @@ import (
 	"tuiter.com/api/pkg/syserror"
 )
 
-var errUnknonw = errors.New("unknown error")
+var errUnknown = errors.New("unknown error")
 
 type LogWriter struct {
 	http.ResponseWriter
@@ -33,7 +33,7 @@ type ErrResponse struct {
 func ErrInternalServer(err error) *ErrResponse {
 	return &ErrResponse{
 		Err:            err,
-		HTTPStatusCode: 500,
+		HTTPStatusCode: http.StatusInternalServerError,
 		StatusText:     "Internal Server Error.",
 		ErrorText:      err.Error(),
 	}
@@ -42,7 +42,7 @@ func ErrInternalServer(err error) *ErrResponse {
 func ErrNotFound(err error) *ErrResponse {
 	return &ErrResponse{
 		Err:            err,
-		HTTPStatusCode: 404,
+		HTTPStatusCode: http.StatusNotFound,
 		StatusText:     "Not Found.",
 		ErrorText:      err.Error(),
 	}
@@ -51,7 +51,7 @@ func ErrNotFound(err error) *ErrResponse {
 func ErrInvalidRequest(err error) *ErrResponse {
 	return &ErrResponse{
 		Err:            err,
-		HTTPStatusCode: 400,
+		HTTPStatusCode: http.StatusBadRequest,
 		StatusText:     "Invalid request.",
 		ErrorText:      err.Error(),
 	}
@@ -99,7 +99,7 @@ func (e *WrapperErrorRenderer) RenderError(err error) *ErrResponse {
 		}
 	}
 
-	return ErrInternalServer(errUnknonw)
+	return ErrInternalServer(errUnknown)
 }
 
 func (e *WrapperErrorRenderer) ErrorHandlerMiddleware(next http.Handler) http.Handler {
