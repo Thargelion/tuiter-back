@@ -24,13 +24,13 @@ func (c *Service) Search(ctx context.Context, query map[string]interface{}) ([]*
 }
 
 func (c *Service) FindUserByID(ctx context.Context, id string) (*user.User, error) {
-	u, err := c.userRepo.FindUserByID(ctx, id)
+	userByID, err := c.userRepo.FindUserByID(ctx, id)
 
 	if err != nil {
 		return nil, fmt.Errorf("syserror searching for a user on repository: %w", err)
 	}
 
-	return u, nil
+	return userByID, nil
 }
 
 func (c *Service) Create(ctx context.Context, user *user.User) (*user.User, error) {

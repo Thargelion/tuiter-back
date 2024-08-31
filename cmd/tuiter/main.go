@@ -20,27 +20,35 @@ import (
 	"tuiter.com/api/pkg/logging"
 )
 
+const (
+	defaultTimeoutSeconds       = 5
+	defaultHeaderTimeoutSeconds = 3
+)
+
 func main() {
 	// Chi
 	chiRouter := chi.NewRouter()
 	chiRouter.Use(middleware.Recoverer)
-	chiRouter.Use(middleware.Timeout(5 * time.Second))
+	chiRouter.Use(middleware.Timeout(defaultTimeoutSeconds * time.Second))
 	chiRouter.Use(handlers.RequestTagger) // Chi already has one -_-
 	chiRouter.Use(middleware.Logger)
-	chiRouter.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+	chiRouter.Get("/ping", func(w http.ResponseWriter, _ *http.Request) {
 		handlers.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
 	addRoutes(chiRouter)
+
 	port := os.Getenv("PORT")
-	addr := fmt.Sprintf(":%s", port)
+	addr := ":" + port
 	server := &http.Server{
 		Addr:              addr,
-		ReadHeaderTimeout: 3 * time.Second,
+		ReadHeaderTimeout: defaultHeaderTimeoutSeconds * time.Second,
 		Handler:           chiRouter,
 	}
 
 	printWelcomeMessage()
+
 	err := server.ListenAndServe()
+
 	if err != nil {
 		panic(err)
 	}

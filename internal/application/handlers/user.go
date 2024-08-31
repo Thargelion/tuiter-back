@@ -44,6 +44,7 @@ func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
 		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
 			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+
 			return
 		}
 
@@ -58,6 +59,7 @@ func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
 		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
 			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+
 			return
 		}
 
@@ -67,6 +69,7 @@ func (r *UserRouter) Search(writer http.ResponseWriter, request *http.Request) {
 	err = render.RenderList(writer, request, newUserList(users))
 	if err != nil {
 		r.logger.Printf(request.Context(), "syserror rendering user list: %v", err)
+
 		return
 	}
 }
@@ -79,6 +82,7 @@ func (r *UserRouter) FindUserByID(writer http.ResponseWriter, request *http.Requ
 		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
 		if err != nil {
 			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+
 			return
 		}
 
@@ -88,6 +92,7 @@ func (r *UserRouter) FindUserByID(writer http.ResponseWriter, request *http.Requ
 	err = render.Render(writer, request, newUserPayload(userFound))
 	if err != nil {
 		r.logger.Printf(request.Context(), "syserror rendering user: %v", err)
+
 		return
 	}
 }
@@ -120,8 +125,8 @@ func (r *UserRouter) CreateUser(writer http.ResponseWriter, request *http.Reques
 }
 
 type userCreatePayload struct {
-	Name      string `json:"name" validate:"required"`
 	AvatarURL string `json:"avatar_url"`
+	Name      string `json:"name"`
 }
 
 func (u *userCreatePayload) ToUser() *user.User {

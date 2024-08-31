@@ -8,7 +8,11 @@ import (
 	"tuiter.com/api/pkg/logging"
 )
 
-func NewTuitHandler(repository tuit.Repository, errRenderer ErrorRenderer, logger logging.ContextualLogger) *TuitHandler {
+func NewTuitHandler(
+	repository tuit.Repository,
+	errRenderer ErrorRenderer,
+	logger logging.ContextualLogger,
+) *TuitHandler {
 	return &TuitHandler{
 		repo:          repository,
 		errorRenderer: errRenderer,
@@ -124,7 +128,7 @@ func (r *TuitHandler) CreateTuit(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err = render.Render(writer, request, newResponse(201, "Post created"))
+	err = render.Render(writer, request, newResponse(http.StatusCreated, "Post created"))
 	if err != nil {
 		return
 	}
