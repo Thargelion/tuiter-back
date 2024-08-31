@@ -21,7 +21,13 @@ type UserPostService struct {
 }
 
 func (u *UserPostService) Paginate(ctx context.Context, userID int, page int) ([]*userpost.UserPost, error) {
-	return u.userPostRepository.ListByPage(ctx, page, userID)
+	userTuitPage, err := u.userPostRepository.ListByPage(ctx, page, userID)
+
+	if err != nil {
+		return nil, fmt.Errorf("error paginating user posts: %w", err)
+	}
+
+	return userTuitPage, nil
 }
 
 func (u *UserPostService) AddLike(ctx context.Context, userID int, tuitID int) (*userpost.UserPost, error) {
