@@ -45,7 +45,7 @@ func main() {
 		Handler:           chiRouter,
 	}
 
-	printWelcomeMessage()
+	printWelcomeMessage(port)
 
 	err := server.ListenAndServe()
 
