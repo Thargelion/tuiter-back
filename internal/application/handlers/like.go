@@ -44,7 +44,7 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	userPost, err := l.liker.AddLike(request.Context(), payload.UserID, payload.TuitID)
+	userTuit, err := l.liker.AddLike(request.Context(), payload.UserID, payload.TuitID)
 
 	if err != nil {
 		_ = render.Render(writer, request, l.errorRenderer.RenderError(err))
@@ -52,7 +52,7 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	err = render.Render(writer, request, &userPostPayload{userPost})
+	err = render.Render(writer, request, &userPostPayload{userTuit})
 
 	if err != nil {
 		l.logger.Printf(request.Context(), "syserror rendering response: %v", err)
@@ -81,7 +81,7 @@ func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	userPost, err := l.liker.RemoveLike(request.Context(), payload.UserID, payload.TuitID)
+	userTuit, err := l.liker.RemoveLike(request.Context(), payload.UserID, payload.TuitID)
 
 	if err != nil {
 		err := render.Render(writer, request, l.errorRenderer.RenderError(err))
@@ -94,5 +94,5 @@ func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	_ = render.Render(writer, request, &userPostPayload{userPost})
+	_ = render.Render(writer, request, &userPostPayload{userTuit})
 }

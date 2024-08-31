@@ -2,23 +2,15 @@ linters:
   enable-all: true
   disable:
     # Disabling deprecated linters
-    - deadcode
-    - ifshort
-    - interfacer
-    - scopelint
-    - varcheck
-    - structcheck
-    - maligned
-    - golint
-    - nosnakecase
-    - exhaustivestruct
+    - execinquery
+    - exportloopref
     # To fix later
-    - gomnd
-    - forcetypeassert
     - dupl
+    - forcetypeassert
+    - gomnd
     # Disabling by decision
+    - depguard
     - exhaustruct
-    - tagliatelle
     - gofumpt
     - prealloc
-    - depguard
+    - tagliatelle

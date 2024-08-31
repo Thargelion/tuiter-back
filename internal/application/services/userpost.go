@@ -24,7 +24,7 @@ func (u *UserPostService) Paginate(ctx context.Context, userID int, page int) ([
 	userTuitPage, err := u.userPostRepository.ListByPage(ctx, page, userID)
 
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving user posts page: %w", err)
+		return nil, fmt.Errorf("error paginating user posts: %w", err)
 	}
 
 	return userTuitPage, nil
