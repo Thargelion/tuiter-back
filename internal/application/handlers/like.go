@@ -22,6 +22,15 @@ type LikeHandler struct {
 	liker         userpost.Liker
 }
 
+// AddLike godoc
+// @Summary Add a like to a tuit
+// @Description Add a like to a tuit
+// @Tags likes
+// @Accept json
+// @Produce json
+// @Param like body like true "Like"
+// @Success 200 {object} userPostPayload
+// @Router /likes [post].
 func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request) {
 	payload := &like{}
 	if err := render.Bind(request, payload); err != nil {
@@ -50,6 +59,15 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 	}
 }
 
+// RemoveLike godoc
+// @Summary Remove a like from a tuit
+// @Description Remove a like from a tuit
+// @Tags likes
+// @Accept json
+// @Produce json
+// @Param like body like true "Like"
+// @Success 200 {object} userPostPayload
+// @Router /likes [delete].
 func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Request) {
 	payload := &like{}
 	if err := render.Bind(request, payload); err != nil {

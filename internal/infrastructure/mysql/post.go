@@ -10,9 +10,7 @@ import (
 	"tuiter.com/api/pkg/logging"
 )
 
-const (
-	defaultPageSize = 100
-)
+const defaultPageSize = 100
 
 func NewTuitRepository(creator *gorm.DB, logger logging.ContextualLogger) *PostRepository {
 	return &PostRepository{database: creator, logger: logger}

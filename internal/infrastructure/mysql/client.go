@@ -8,7 +8,7 @@ import (
 )
 
 func paginatedQuery(query string) string {
-	return query + " LIMIT ? OFFSET ?;"
+	return query + "LIMIT ? OFFSET ?;"
 }
 
 func Connect(user string, pass string, host string, db string) *gorm.DB {

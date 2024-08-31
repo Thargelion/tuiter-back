@@ -86,6 +86,15 @@ func newPostList(posts []*tuit.Post) []render.Renderer {
 	return list
 }
 
+// Search returns all the tuits from a page.
+// @Summary Search tuits
+// @Description Search tuits
+// @Tags tuits
+// @Accept json
+// @Produce json
+// @Param page_id query string true "Page ID"
+// @Success 200 {array} tuitPayload
+// @Router /tuits [get].
 func (r *TuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
 	pageID := request.URL.Query().Get(string(PageIDKey))
 	posts, err := r.repo.ListByPage(request.Context(), pageID)

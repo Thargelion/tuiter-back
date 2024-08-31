@@ -9,7 +9,7 @@ import (
 	"tuiter.com/api/pkg/syserror"
 )
 
-var errUnknonw = errors.New("unknown error")
+var errUnknown = errors.New("unknown error")
 
 type LogWriter struct {
 	http.ResponseWriter
@@ -99,7 +99,7 @@ func (e *WrapperErrorRenderer) RenderError(err error) *ErrResponse {
 		}
 	}
 
-	return ErrInternalServer(errUnknonw)
+	return ErrInternalServer(errUnknown)
 }
 
 func (e *WrapperErrorRenderer) ErrorHandlerMiddleware(next http.Handler) http.Handler {

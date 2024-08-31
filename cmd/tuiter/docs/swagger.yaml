@@ -1,0 +1,232 @@
+basePath: /v1
+definitions:
+  handlers.like:
+    properties:
+      tuit_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  handlers.tuitPayload:
+    properties:
+      author:
+        $ref: '#/definitions/handlers.userPayload'
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      likes:
+        type: integer
+      message:
+        type: string
+      parent_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  handlers.userCreatePayload:
+    properties:
+      avatar_url:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  handlers.userPayload:
+    properties:
+      avatar_url:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+    type: object
+  handlers.userPostPayload:
+    properties:
+      author:
+        type: string
+      avatar_url:
+        type: string
+      date:
+        type: string
+      id:
+        type: integer
+      liked:
+        type: boolean
+      likes:
+        type: integer
+      message:
+        type: string
+      parent_id:
+        type: integer
+    type: object
+  userpost.UserPost:
+    properties:
+      author:
+        type: string
+      avatar_url:
+        type: string
+      date:
+        type: string
+      id:
+        type: integer
+      liked:
+        type: boolean
+      likes:
+        type: integer
+      message:
+        type: string
+      parent_id:
+        type: integer
+    type: object
+info:
+  contact:
+    email: madepietro@unlam.edu.ar
+  description: This is the API for Tuiter, a Twitter clone.
+  title: Tuiter API
+  version: "1"
+paths:
+  /likes:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a like from a tuit
+      parameters:
+      - description: Like
+        in: body
+        name: like
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.like'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.userPostPayload'
+      summary: Remove a like from a tuit
+      tags:
+      - likes
+    post:
+      consumes:
+      - application/json
+      description: Add a like to a tuit
+      parameters:
+      - description: Like
+        in: body
+        name: like
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.like'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.userPostPayload'
+      summary: Add a like to a tuit
+      tags:
+      - likes
+  /tuits:
+    get:
+      consumes:
+      - application/json
+      description: Search tuits
+      parameters:
+      - description: Page ID
+        in: query
+        name: page_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.tuitPayload'
+            type: array
+      summary: Search tuits
+      tags:
+      - posts
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.userCreatePayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.userPayload'
+      summary: Create a new user
+      tags:
+      - users
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.userPayload'
+      summary: Get a user by ID
+      tags:
+      - users
+  /users/{id}/tuits:
+    get:
+      description: Search Users Tuits will return a list of tuits from the user perspective.
+        This means that the user will
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/userpost.UserPost'
+            type: array
+      summary: Search Users' tuits
+      tags:
+      - tuits
+schemes:
+- https
+swagger: "2.0"
