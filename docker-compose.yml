@@ -7,7 +7,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: tuiter
-      MYSQL_USER: api
+      MYSQL_USER: handlers
       MYSQL_PASSWORD: password
     ports:
       - "3306:3306"

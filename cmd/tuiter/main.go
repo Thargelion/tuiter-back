@@ -10,35 +10,45 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	api2 "tuiter.com/api/infrastructure/api"
-	mysql2 "tuiter.com/api/infrastructure/mysql"
-	"tuiter.com/api/internal/avatar"
-	"tuiter.com/api/internal/logging"
-	"tuiter.com/api/internal/post"
-	user2 "tuiter.com/api/internal/user"
+	"tuiter.com/api/internal/application/handlers"
+	"tuiter.com/api/internal/application/router"
+	"tuiter.com/api/internal/application/services"
+	"tuiter.com/api/internal/domain/avatar"
+	"tuiter.com/api/internal/domain/tuit"
+	"tuiter.com/api/internal/domain/user"
+	"tuiter.com/api/internal/infrastructure/mysql"
+	"tuiter.com/api/pkg/logging"
+)
+
+const (
+	defaultTimeoutSeconds       = 5
+	defaultHeaderTimeoutSeconds = 3
 )
 
 func main() {
 	// Chi
 	chiRouter := chi.NewRouter()
 	chiRouter.Use(middleware.Recoverer)
-	chiRouter.Use(middleware.Timeout(5 * time.Second))
-	chiRouter.Use(api2.RequestTagger) // Chi already has one -_-
+	chiRouter.Use(middleware.Timeout(defaultTimeoutSeconds * time.Second))
+	chiRouter.Use(handlers.RequestTagger) // Chi already has one -_-
 	chiRouter.Use(middleware.Logger)
-	chiRouter.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		api2.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
+	chiRouter.Get("/ping", func(w http.ResponseWriter, _ *http.Request) {
+		handlers.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
 	addRoutes(chiRouter)
+
 	port := os.Getenv("PORT")
-	addr := fmt.Sprintf(":%s", port)
+	addr := ":" + port
 	server := &http.Server{
 		Addr:              addr,
-		ReadHeaderTimeout: 3 * time.Second,
+		ReadHeaderTimeout: defaultHeaderTimeoutSeconds * time.Second,
 		Handler:           chiRouter,
 	}
 
 	printWelcomeMessage(port)
+
 	err := server.ListenAndServe()
+
 	if err != nil {
 		panic(err)
 	}
@@ -49,42 +59,43 @@ func addRoutes(chiRouter *chi.Mux) {
 	dbPass := os.Getenv("MYSQL_PASS")
 	dbHost := os.Getenv("MYSQL_HOST")
 	dbName := os.Getenv("MYSQL_DB")
-	dataBase := mysql2.Connect(dbUser, dbPass, dbHost, dbName)
+	dataBase := mysql.Connect(dbUser, dbPass, dbHost, dbName)
 	logger := logging.NewContextualLogger(log.Default())
 
-	err := dataBase.AutoMigrate(&user2.User{}, &post.Post{})
+	err := dataBase.AutoMigrate(&user.User{}, &tuit.Post{})
 	if err != nil {
 		logger.Printf(context.Background(), err.Error())
 		panic("failed to migrate")
 	}
 
-	// Dependencies
-	userRepo := mysql2.NewUserRepository(dataBase, logger)
+	// Repositories
+	userRepo := mysql.NewUserRepository(dataBase, logger)
+	tuitRepo := mysql.NewTuitRepository(dataBase, logger)
+	userPostRepo := mysql.NewUserPostRepository(dataBase, logger)
+
+	// Services
 	avatarUseCases := avatar.NewAvatarUseCases()
-	mysqlHandler := mysql2.NewErrorHandler()
-	postRepo := mysql2.NewPostRepository(dataBase, logger)
-	errHandler := api2.NewErrorsHandler(mysqlHandler)
-	userRouter := api2.NewUserRouter(user2.NewUserUseCases(userRepo, avatarUseCases), errHandler, logger)
-	postRouter := api2.NewPostRouter(postRepo, errHandler, logger)
-	userPostRouter := api2.NewUserPostRouter(mysql2.NewUserPostRepository(dataBase, logger), postRepo, errHandler, logger)
+	userPostUseCases := services.NewUserPostService(tuitRepo, userPostRepo)
+
+	// Error Handlers
+	mysqlHandler := mysql.NewErrorHandler()
+	errHandler := handlers.NewErrorsHandler(mysqlHandler)
+
+	// Handlers
+	userHandler := handlers.NewUserHandler(services.NewUserUseCases(userRepo, avatarUseCases), errHandler, logger)
+	userPostHandler := handlers.NewUserTuitHandler(userPostUseCases, errHandler, logger)
+	tuitHandler := handlers.NewTuitHandler(tuitRepo, errHandler, logger)
+	likeHandler := handlers.NewLikeHandler(userPostUseCases, errHandler, logger)
+
+	// Routers
+	userRouter := router.NewUserRouter(userHandler, userPostHandler)
+	tuitRouter := router.NewTuitRouter(tuitHandler)
+	likeRouter := router.NewLikeRouter(likeHandler)
 
 	chiRouter.Route("/v1", func(router chi.Router) {
-		router.Route("/users", func(r chi.Router) {
-			r.Post("/", userRouter.CreateUser)
-			r.Get("/{id}", userRouter.FindUserByID)
-			r.Get("/", userRouter.Search)
-			r.With(api2.Pagination).Get("/{id}/tuits", userPostRouter.Search)
-		})
-		router.Route("/tuits", func(r chi.Router) {
-			r.With(api2.Pagination).Get("/", postRouter.Search)
-			r.Post("/", postRouter.CreatePost)
-		})
-		router.Route("/likes", func(r chi.Router) {
-			r.Post("/", userPostRouter.AddLike)
-		})
-		router.Route("/dislikes", func(r chi.Router) {
-			r.Post("/", userPostRouter.RemoveLike)
-		})
+		router.Route("/users", userRouter.Route)
+		router.Route("/tuits", tuitRouter.Route)
+		router.Route("/likes", likeRouter.Route)
 	})
 }
 
