@@ -9,6 +9,15 @@ import (
 	"tuiter.com/api/pkg/logging"
 )
 
+func (u *UserEntity) TableName() string {
+	return "users"
+}
+
+type UserEntity struct {
+	user.User
+	gorm.Model
+}
+
 func NewUserRepository(creator *gorm.DB, logger logging.ContextualLogger) *UserRepository {
 	return &UserRepository{database: creator, logger: logger}
 }
