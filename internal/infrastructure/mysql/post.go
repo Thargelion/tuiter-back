@@ -7,16 +7,24 @@ import (
 
 	"gorm.io/gorm"
 	"tuiter.com/api/internal/domain/tuit"
-	"tuiter.com/api/internal/domain/user"
 	"tuiter.com/api/pkg/logging"
 )
 
 const defaultPageSize = 100
 
+func (te *TuitEntity) TableName() string {
+	return "tuits"
+}
+
 type TuitEntity struct {
 	gorm.Model
 	tuit.Post
-	Users []user.User `gorm:"many2many:post_likes;"`
+	ParentID *int
+	Message  string
+	AuthorID int
+	Author   UserEntity
+	Users    []UserEntity `gorm:"many2many:tuit_likes;"`
+	Likes    int
 }
 
 func NewTuitRepository(creator *gorm.DB, logger logging.ContextualLogger) *PostRepository {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/render"
 	"tuiter.com/api/internal/domain/tuit"
+	"tuiter.com/api/internal/domain/user"
 	"tuiter.com/api/pkg/logging"
 )
 
@@ -39,7 +40,6 @@ func newTuitPayload(post *tuit.Post) *tuitPayload {
 		commonPayload: commonPayload{
 			ID:        post.ID,
 			CreatedAt: post.CreatedAt,
-			UpdatedAt: post.UpdatedAt,
 		},
 		ParentID: post.ParentID,
 		Message:  post.Message,
@@ -49,7 +49,7 @@ func newTuitPayload(post *tuit.Post) *tuitPayload {
 }
 
 type createTuitPayload struct {
-	AuthorID int    `json:"author_id"`
+	AuthorID uint   `json:"author_id"`
 	Message  string `json:"message"`
 }
 
@@ -63,8 +63,10 @@ func (c createTuitPayload) Bind(_ *http.Request) error {
 
 func (c createTuitPayload) toPost() *tuit.Post {
 	return &tuit.Post{
-		Message:  c.Message,
-		AuthorID: c.AuthorID,
+		Message: c.Message,
+		Author: user.User{
+			ID: c.AuthorID,
+		},
 	}
 }
 

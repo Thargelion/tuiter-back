@@ -18,7 +18,6 @@ import (
 	"tuiter.com/api/internal/application/router"
 	"tuiter.com/api/internal/application/services"
 	"tuiter.com/api/internal/domain/avatar"
-	"tuiter.com/api/internal/domain/tuit"
 	"tuiter.com/api/internal/infrastructure/mysql"
 	"tuiter.com/api/pkg/logging"
 )
@@ -96,7 +95,7 @@ func addRoutes(chiRouter *chi.Mux) {
 	dataBase := mysql.Connect(dbUser, dbPass, dbHost, dbName)
 	logger := logging.NewContextualLogger(log.Default())
 
-	err := dataBase.AutoMigrate(&mysql.UserEntity{}, &tuit.Post{})
+	err := dataBase.AutoMigrate(&mysql.UserEntity{}, &mysql.TuitEntity{})
 	if err != nil {
 		logger.Printf(context.Background(), err.Error())
 		panic("failed to migrate")
