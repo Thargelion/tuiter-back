@@ -6,7 +6,7 @@ type AuthenticatorMiddleware struct {
 	validator TokenValidator
 }
 
-func NewAuthenticator(validator TokenValidator) *AuthenticatorMiddleware {
+func NewAuthenticatorMiddleware(validator TokenValidator) *AuthenticatorMiddleware {
 	return &AuthenticatorMiddleware{validator: validator}
 }
 

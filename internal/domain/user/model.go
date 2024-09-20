@@ -7,11 +7,6 @@ import (
 	"tuiter.com/api/pkg/syserror"
 )
 
-type Login struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 type Logged struct {
 	User
 	Token string `json:"token"`

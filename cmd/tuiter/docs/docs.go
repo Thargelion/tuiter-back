@@ -120,7 +120,7 @@ const docTemplate = `{
         },
         "/users": {
             "post": {
-                "description": "Create a new user",
+                "description": "create a new user",
                 "consumes": [
                     "application/json"
                 ],
@@ -130,7 +130,7 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Create a new user",
+                "summary": "create a new user",
                 "parameters": [
                     {
                         "description": "User",

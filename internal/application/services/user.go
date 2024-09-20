@@ -35,7 +35,7 @@ func (c *Service) FindUserByID(ctx context.Context, id string) (*user.User, erro
 	return userByID, nil
 }
 
-func (c *Service) Create(ctx context.Context, user *user.User) (*user.User, error) {
+func (c *Service) create(ctx context.Context, user *user.User) (*user.User, error) {
 	user.AvatarURL = c.generateAvatar.New(user.Name)
 
 	newUser, err := c.userRepo.Create(ctx, user)
@@ -54,7 +54,7 @@ func (c *Service) CreateAndLogin(ctx context.Context, u *user.User) (*user.Logge
 		return nil, fmt.Errorf("syserror securing user: %w", err)
 	}
 
-	newUser, err := c.Create(ctx, secureUser)
+	newUser, err := c.create(ctx, secureUser)
 
 	if err != nil {
 		return nil, fmt.Errorf("syserror creating user: %w", err)
@@ -69,27 +69,14 @@ func (c *Service) CreateAndLogin(ctx context.Context, u *user.User) (*user.Logge
 	return &user.Logged{User: *newUser, Token: token}, nil
 }
 
-func NewUserUseCases(userRepo user.Repository, avatarService avatar.UseCases) *Service {
-	return &Service{userRepo: userRepo, generateAvatar: avatarService}
-}
-
-func (ua *UserAuthenticator) Login(ctx context.Context, login *user.Login) (*user.Logged, error) {
-	loginUser, err := ua.userRepo.FindByEmailAndPassword(ctx, login.Email, login.Password)
-
-	if err != nil {
-		return nil, fmt.Errorf("syserror finding user by email and password: %w", err)
+func NewUserService(
+	userRepo user.Repository,
+	tokenHandler security.TokenHandler,
+	avatarService avatar.UseCases,
+) *Service {
+	return &Service{
+		userRepo:       userRepo,
+		tokenHandler:   tokenHandler,
+		generateAvatar: avatarService,
 	}
-
-	token, err := ua.tokenHandler.GenerateToken(loginUser.Email, loginUser.Email)
-
-	if err != nil {
-		return nil, fmt.Errorf("syserror generating token: %w", err)
-	}
-
-	return &user.Logged{User: *loginUser, Token: token}, nil
-}
-
-type UserAuthenticator struct {
-	userRepo     user.LoginRepository
-	tokenHandler security.TokenHandler
 }

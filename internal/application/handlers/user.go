@@ -106,9 +106,9 @@ func (u *User) FindUserByID(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-// CreateUser Create Users godoc
-// @Summary Create a new user
-// @Description Create a new user
+// CreateUser create Users godoc
+// @Summary create a new user
+// @Description create a new user
 // @Tags users
 // @Accept json
 // @Produce json
@@ -137,62 +137,6 @@ func (u *User) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = render.Render(w, r, newLoggedUserPayload(newUser))
-}
-
-type Login struct {
-	auth          user.Authenticate
-	errorRenderer ErrorRenderer
-}
-
-// Login Logs a user godoc
-// @Summary Logs a user in
-// @Description Logs a user in if the credentials are correct
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param user body loginPayload true "User"
-// @Success 200 {object} loggedUserPayload
-// @Router /users [post].
-func (l *Login) Login(w http.ResponseWriter, r *http.Request) {
-	loginPayload := &loginPayload{}
-	err := render.Bind(r, loginPayload)
-
-	if err != nil {
-		_ = render.Render(w, r, l.errorRenderer.RenderError(err))
-		return
-	}
-
-	logged, err := l.auth.Login(r.Context(), loginPayload.toModel())
-
-	if err != nil {
-		_ = render.Render(w, r, l.errorRenderer.RenderError(err))
-		return
-	}
-
-	_ = render.Render(w, r, newLoggedUserPayload(logged))
-}
-
-func (l *loginPayload) Bind(_ *http.Request) error {
-	v := validator.New()
-	err := v.Struct(l)
-
-	if err != nil {
-		return fmt.Errorf("validation failed: %w", err)
-	}
-
-	return nil
-}
-
-func (l *loginPayload) toModel() *user.Login {
-	return &user.Login{
-		Email:    l.Email,
-		Password: l.Password,
-	}
-}
-
-type loginPayload struct {
-	Email    string `json:"email"    validate:"required,email"`
-	Password string `json:"password" validate:"required"`
 }
 
 type userCreatePayload struct {

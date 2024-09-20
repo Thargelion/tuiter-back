@@ -5,14 +5,9 @@ import (
 )
 
 type UseCases interface {
-	CreateUserUseCase
 	SearchUserUseCase
 	FindUserUseCase
 	CreateAndLogin(ctx context.Context, user *User) (*Logged, error)
-}
-
-type CreateUserUseCase interface {
-	Create(ctx context.Context, user *User) (*User, error)
 }
 
 type SearchUserUseCase interface {
@@ -25,5 +20,5 @@ type FindUserUseCase interface {
 
 type Authenticate interface {
 	// Login will return a logged user if the login is successful
-	Login(ctx context.Context, login *Login) (*Logged, error)
+	Login(ctx context.Context, login *User) (*Logged, error)
 }

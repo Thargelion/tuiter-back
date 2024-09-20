@@ -19,13 +19,16 @@ import (
 	"tuiter.com/api/internal/application/services"
 	"tuiter.com/api/internal/domain/avatar"
 	"tuiter.com/api/internal/infrastructure/mysql"
+	"tuiter.com/api/pkg/instant"
 	"tuiter.com/api/pkg/logging"
+	"tuiter.com/api/pkg/security"
 )
 
 const (
 	corsMaxAge        = 300
 	timeout           = 5 * time.Second
 	readHeaderTimeout = 3 * time.Second
+	tokenTimeoutHours = 24
 )
 
 // @title Tuiter API
@@ -35,19 +38,28 @@ const (
 // @BasePath	/v1
 // @contact.email madepietro@unlam.edu.ar.
 func main() {
+	// Time
+	locatedTime, _ := time.LoadLocation("America/Argentina/Buenos_Aires")
+	tuiterTime := instant.NewTuiterTime(locatedTime)
 	// Chi
 	port := os.Getenv("PORT")
 	addr := ":" + port
 	chiRouter := chi.NewRouter()
 	// JWT
-	_ = os.Getenv("JWT_SECRET")
+	secret := os.Getenv("JWT_SECRET")
+	expiration := time.Hour * tokenTimeoutHours
 	// Configure Chi
 	chiRouter.Use(middleware.Recoverer)
 	chiRouter.Use(middleware.Timeout(timeout))
 	chiRouter.Use(handlers.RequestTagger) // Chi already has one -_-
 	chiRouter.Use(middleware.Logger)
+
 	workDir, _ := os.Getwd()
 	filesDir := http.Dir(filepath.Join(workDir, "data"))
+
+	// Security
+	tokenValidator := security.NewJWTHandler(expiration, []byte(secret), tuiterTime)
+	securityMiddleware := security.NewAuthenticatorMiddleware(tokenValidator)
 	// Add Globals
 	// Basic CORS
 	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
@@ -70,30 +82,15 @@ func main() {
 
 	fileServerRouter := router.NewFileServer()
 	fileServerRouter.FileRoutes(chiRouter, "/files", filesDir)
-	addRoutes(chiRouter)
 
-	server := &http.Server{
-		Addr:              addr,
-		ReadHeaderTimeout: readHeaderTimeout,
-		Handler:           chiRouter,
-	}
-
-	printWelcomeMessage(port)
-
-	err := server.ListenAndServe()
-
-	if err != nil {
-		panic(err)
-	}
-}
-
-func addRoutes(chiRouter *chi.Mux) {
 	dbUser := os.Getenv("MYSQL_USER")
 	dbPass := os.Getenv("MYSQL_PASS")
 	dbHost := os.Getenv("MYSQL_HOST")
 	dbName := os.Getenv("MYSQL_DB")
 	dataBase := mysql.Connect(dbUser, dbPass, dbHost, dbName)
 	logger := logging.NewContextualLogger(log.Default())
+
+	// Security
 
 	err := dataBase.AutoMigrate(&mysql.UserEntity{}, &mysql.TuitEntity{})
 	if err != nil {
@@ -109,27 +106,51 @@ func addRoutes(chiRouter *chi.Mux) {
 	// Services
 	avatarUseCases := avatar.NewAvatarUseCases()
 	userPostUseCases := services.NewUserPostService(tuitRepo, userPostRepo)
+	authenticator := services.NewUserAuthenticator(userRepo, tokenValidator)
+	userService := services.NewUserService(userRepo, tokenValidator, avatarUseCases)
 
 	// Error Handlers
 	mysqlHandler := mysql.NewErrorHandler()
 	errHandler := handlers.NewErrorsHandler(mysqlHandler)
 
 	// Handlers
-	userHandler := handlers.NewUserHandler(services.NewUserUseCases(userRepo, avatarUseCases), errHandler, logger)
+	loginHandler := handlers.NewLogin(authenticator, errHandler)
+	userHandler := handlers.NewUserHandler(userService, errHandler, logger)
 	userPostHandler := handlers.NewUserTuitHandler(userPostUseCases, errHandler, logger)
 	tuitHandler := handlers.NewTuitHandler(tuitRepo, errHandler, logger)
 	likeHandler := handlers.NewLikeHandler(userPostUseCases, errHandler, logger)
 
 	// Routers
-	userRouter := router.NewUserRouter(userHandler, userPostHandler)
+	userRouter := router.NewUserRouter(userPostHandler)
+	publicUserRouter := router.NewPublicUserRouter(userHandler)
 	tuitRouter := router.NewTuitRouter(tuitHandler)
 	likeRouter := router.NewLikeRouter(likeHandler)
+	loginRouter := router.NewLoginRouter(loginHandler)
 
+	usersRouter := chi.NewRouter()
+	usersRouter.Use(securityMiddleware.Middleware)
+	usersRouter.Route("/tuits", tuitRouter.Route)
+	usersRouter.Route("/likes", likeRouter.Route)
+	usersRouter.Route("/me", userRouter.Route)
 	chiRouter.Route("/v1", func(router chi.Router) {
-		router.Route("/users", userRouter.Route)
-		router.Route("/tuits", tuitRouter.Route)
-		router.Route("/likes", likeRouter.Route)
+		router.Route("/login", loginRouter.Route)
+		router.Route("/users", publicUserRouter.Route)
+		router.Mount("/", usersRouter)
 	})
+
+	server := &http.Server{
+		Addr:              addr,
+		ReadHeaderTimeout: readHeaderTimeout,
+		Handler:           chiRouter,
+	}
+
+	printWelcomeMessage(port)
+
+	err = server.ListenAndServe()
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func printWelcomeMessage(port string) {
