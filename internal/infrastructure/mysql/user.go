@@ -15,6 +15,7 @@ func (u *UserEntity) TableName() string {
 
 type UserEntity struct {
 	user.User
+	Email string `gorm:"index:idx_email,unique"`
 	gorm.Model
 }
 
@@ -72,13 +73,12 @@ func (r *UserRepository) Create(ctx context.Context, user *user.User) (*user.Use
 	return user, nil
 }
 
-func (r *UserRepository) FindByEmailAndPassword(
+func (r *UserRepository) FindByEmail(
 	_ context.Context,
 	email string,
-	passwordHash string,
 ) (*user.User, error) {
 	var res = &user.User{}
-	txResult := r.database.First(&res, "email = ? AND password = ?", email, passwordHash)
+	txResult := r.database.First(&res, "email = ?", email)
 
 	if txResult.Error != nil {
 		return nil, fmt.Errorf("syserror finding user on database %s %w", email, txResult.Error)

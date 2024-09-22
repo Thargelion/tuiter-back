@@ -24,7 +24,7 @@ func NewUserRouter(userPostHandler userPostHandler) *UserRouter {
 }
 
 func (ur *UserRouter) Route(router chi.Router) {
-	router.With(handlers.Pagination).Get("/{id}/tuits", ur.userPost.Search)
+	router.With(handlers.Pagination).Get("/feed", ur.userPost.Search)
 }
 
 type UserRouter struct {

@@ -13,19 +13,25 @@ func NewUserAuthenticator(userRepo user.LoginRepository, tokenHandler security.T
 }
 
 func (ua *UserAuthenticator) Login(ctx context.Context, login *user.User) (*user.Logged, error) {
-	loginUser, err := ua.userRepo.FindByEmailAndPassword(ctx, login.Email, login.Password)
+	storedUser, err := ua.userRepo.FindByEmail(ctx, login.Email)
 
 	if err != nil {
-		return nil, fmt.Errorf("syserror finding user by email and password: %w", err)
+		return nil, fmt.Errorf("syserror finding user by email: %w", err)
 	}
 
-	token, err := ua.tokenHandler.GenerateToken(loginUser.Email, loginUser.Email)
+	err = storedUser.CheckPassword(login.Password)
+
+	if err != nil {
+		return nil, fmt.Errorf("wrong password: %w", err)
+	}
+
+	token, err := ua.tokenHandler.GenerateToken(storedUser.ID, storedUser.Email, storedUser.Email)
 
 	if err != nil {
 		return nil, fmt.Errorf("syserror generating token: %w", err)
 	}
 
-	return &user.Logged{User: *loginUser, Token: token}, nil
+	return &user.Logged{User: *storedUser, Token: token}, nil
 }
 
 type UserAuthenticator struct {

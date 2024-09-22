@@ -1,6 +1,9 @@
 package security
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+)
 
 type AuthenticatorMiddleware struct {
 	validator TokenValidator
@@ -12,20 +15,16 @@ func NewAuthenticatorMiddleware(validator TokenValidator) *AuthenticatorMiddlewa
 
 func (a *AuthenticatorMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
+		tokenString := r.Header.Get("Authorization")
 
-		if token == "" {
-			http.Error(w, "Token not found", http.StatusUnauthorized)
-			return
-		}
-
-		_, err := a.validator.ValidateToken(token)
+		token, err := a.validator.ValidateToken(tokenString)
 
 		if err != nil {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), "token", token)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

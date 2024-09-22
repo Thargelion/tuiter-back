@@ -4,28 +4,32 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/golang-jwt/jwt/v5"
 	"tuiter.com/api/internal/domain/userpost"
 	"tuiter.com/api/pkg/logging"
+	"tuiter.com/api/pkg/security"
 )
 
 func NewUserTuitHandler(
 	useCases userpost.UseCases,
+	claimsExtractor security.TokenClaimsExtractor,
 	errRenderer ErrorRenderer,
 	logger logging.ContextualLogger,
 ) *UserTuitHandler {
 	return &UserTuitHandler{
-		useCases:      useCases,
-		errorRenderer: errRenderer,
-		logger:        logger,
+		useCases:        useCases,
+		claimsExtractor: claimsExtractor,
+		errorRenderer:   errRenderer,
+		logger:          logger,
 	}
 }
 
 type UserTuitHandler struct {
-	useCases      userpost.UseCases
-	errorRenderer ErrorRenderer
-	logger        logging.ContextualLogger
+	useCases        userpost.UseCases
+	claimsExtractor security.TokenClaimsExtractor
+	errorRenderer   ErrorRenderer
+	logger          logging.ContextualLogger
 }
 
 // Search Tuits From User godoc
@@ -37,7 +41,7 @@ type UserTuitHandler struct {
 // @Param id path int true "User ID"
 // @Produce json
 // @Success 200 {array} userpost.UserPost
-// @Router /users/{id}/tuits [get].
+// @Router /me/feed [get].
 func (l *UserTuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
 	page, err := strconv.Atoi(request.URL.Query().Get("page"))
 
@@ -47,13 +51,23 @@ func (l *UserTuitHandler) Search(writer http.ResponseWriter, request *http.Reque
 		page = 0
 	}
 
-	userID, err := strconv.Atoi(chi.URLParam(request, "id"))
+	token, ok := request.Context().Value("token").(*jwt.Token)
+
+	if !ok {
+		_ = render.Render(writer, request, ErrInvalidRequest(err))
+
+		return
+	}
+
+	claims, err := l.claimsExtractor.ExtractClaims(token)
 
 	if err != nil {
 		_ = render.Render(writer, request, ErrInvalidRequest(err))
 
 		return
 	}
+
+	userID := int(claims["sub"].(float64))
 
 	userPosts, err := l.useCases.Paginate(request.Context(), page, userID)
 

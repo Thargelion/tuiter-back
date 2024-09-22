@@ -11,5 +11,5 @@ type Repository interface {
 }
 
 type LoginRepository interface {
-	FindByEmailAndPassword(ctx context.Context, email string, password string) (*User, error)
+	FindByEmail(ctx context.Context, email string) (*User, error)
 }

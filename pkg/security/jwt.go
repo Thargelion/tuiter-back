@@ -19,12 +19,13 @@ type JWTHandler struct {
 	instant  instant.Instant
 }
 
-func (j *JWTHandler) GenerateToken(email string, username string) (string, error) {
+func (j *JWTHandler) GenerateToken(id uint, email string, username string) (string, error) {
 	expirationTime := j.instant.Now().Add(j.lifeSpan)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"iss":   "unlam-tuiter",
-		"sub":   username,
+		"sub":   id,
 		"email": email,
+		"name":  username,
 		"exp":   expirationTime.Unix(),
 	})
 
@@ -47,4 +48,13 @@ func (j *JWTHandler) ValidateToken(tokenString string) (*jwt.Token, error) {
 	}
 
 	return token, nil
+}
+
+func (j *JWTHandler) ExtractClaims(token *jwt.Token) (jwt.MapClaims, error) {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("%s: %w", "invalid claims", syserror.ErrInternal)
+	}
+
+	return claims, nil
 }

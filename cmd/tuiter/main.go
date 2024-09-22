@@ -116,7 +116,7 @@ func main() {
 	// Handlers
 	loginHandler := handlers.NewLogin(authenticator, errHandler)
 	userHandler := handlers.NewUserHandler(userService, errHandler, logger)
-	userPostHandler := handlers.NewUserTuitHandler(userPostUseCases, errHandler, logger)
+	userPostHandler := handlers.NewUserTuitHandler(userPostUseCases, tokenValidator, errHandler, logger)
 	tuitHandler := handlers.NewTuitHandler(tuitRepo, errHandler, logger)
 	likeHandler := handlers.NewLikeHandler(userPostUseCases, errHandler, logger)
 

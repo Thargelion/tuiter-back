@@ -12,11 +12,11 @@ import (
 const (
 	postsPerPage              = 20
 	projectedPostPartialQuery = `
-	SELECT p.id as id, parent_id, message, u.name as author, u.avatar_url, pl.user_id IS NOT NULL as liked , 
-	       likes, p.created_at as date 
-		FROM posts as p
-		    LEFT JOIN (SELECT user_id, post_id FROM post_likes) pl on p.id = pl.post_id AND pl.user_id = ?         
-		    JOIN users u ON p.author_id = u.id
+	SELECT t.id as id, parent_id, message, u.name as author, u.avatar_url, pl.user_entity_id IS NOT NULL as liked , 
+	       likes, t.created_at as date 
+		FROM tuits as t
+		    LEFT JOIN (SELECT user_entity_id, tuit_entity_id FROM tuit_likes) pl on t.id = pl.tuit_entity_id AND pl.user_entity_id = ?         
+		    JOIN users u ON t.author_id = u.id
 	`
 	projectedPostByIDQuery = projectedPostPartialQuery + "WHERE p.id = ?"
 )

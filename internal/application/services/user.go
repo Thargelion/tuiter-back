@@ -60,7 +60,7 @@ func (c *Service) CreateAndLogin(ctx context.Context, u *user.User) (*user.Logge
 		return nil, fmt.Errorf("syserror creating user: %w", err)
 	}
 
-	token, err := c.tokenHandler.GenerateToken(newUser.Email, newUser.Email)
+	token, err := c.tokenHandler.GenerateToken(newUser.ID, newUser.Email, newUser.Email)
 
 	if err != nil {
 		return nil, fmt.Errorf("syserror generating token: %w", err)

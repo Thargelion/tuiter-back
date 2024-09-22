@@ -40,12 +40,7 @@ func (l *Login) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	securedUser, err := loginPayload.toModel()
-	if err != nil {
-		_ = render.Render(w, r, l.errorRenderer.RenderError(err))
-
-		return
-	}
+	securedUser := loginPayload.toModel()
 
 	logged, err := l.auth.Login(r.Context(), securedUser)
 
@@ -69,13 +64,11 @@ func (l *loginPayload) Bind(_ *http.Request) error {
 	return nil
 }
 
-func (l *loginPayload) toModel() (*user.User, error) {
-	u := &user.User{
+func (l *loginPayload) toModel() *user.User {
+	return &user.User{
 		Email:    l.Email,
 		Password: l.Password,
 	}
-
-	return u.SecureUser()
 }
 
 type loginPayload struct {
