@@ -102,7 +102,7 @@ func (u *userPostPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
 }
 
 func newUserPostList(posts []*userpost.UserPost) []render.Renderer {
-	var list []render.Renderer
+	list := []render.Renderer{}
 
 	for _, userPost := range posts {
 		list = append(list, &userPostPayload{userPost})
