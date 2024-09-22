@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"tuiter.com/api/internal/domain/userpost"
+	"tuiter.com/api/internal/domain/feed"
 	"tuiter.com/api/pkg/logging"
 )
 
-func NewLikeHandler(liker userpost.Liker, errorRenderer ErrorRenderer, logger logging.ContextualLogger) *LikeHandler {
+func NewLikeHandler(liker feed.Liker, errorRenderer ErrorRenderer, logger logging.ContextualLogger) *LikeHandler {
 	return &LikeHandler{
 		errorRenderer: errorRenderer,
 		logger:        logger,
@@ -19,7 +19,7 @@ func NewLikeHandler(liker userpost.Liker, errorRenderer ErrorRenderer, logger lo
 type LikeHandler struct {
 	errorRenderer ErrorRenderer
 	logger        logging.ContextualLogger
-	liker         userpost.Liker
+	liker         feed.Liker
 }
 
 // AddLike godoc

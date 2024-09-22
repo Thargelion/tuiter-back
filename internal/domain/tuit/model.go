@@ -6,7 +6,7 @@ import (
 	"tuiter.com/api/internal/domain/user"
 )
 
-type Post struct {
+type Tuit struct {
 	ID        uint
 	ParentID  *int
 	Message   string

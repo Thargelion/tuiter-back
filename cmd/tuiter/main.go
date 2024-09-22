@@ -101,7 +101,7 @@ func main() {
 	// Repositories
 	userRepo := mysql.NewUserRepository(dataBase, logger)
 	tuitRepo := mysql.NewTuitRepository(dataBase, logger)
-	userPostRepo := mysql.NewUserPostRepository(dataBase, logger)
+	userPostRepo := mysql.NewFeedRepository(dataBase, logger)
 
 	// Services
 	avatarUseCases := avatar.NewAvatarUseCases()
@@ -117,7 +117,7 @@ func main() {
 	loginHandler := handlers.NewLogin(authenticator, errHandler)
 	userHandler := handlers.NewUserHandler(userService, errHandler, logger)
 	userPostHandler := handlers.NewUserTuitHandler(userPostUseCases, tokenValidator, errHandler, logger)
-	tuitHandler := handlers.NewTuitHandler(tuitRepo, errHandler, logger)
+	tuitHandler := handlers.NewTuitHandler(tuitRepo, tokenValidator, errHandler, logger)
 	likeHandler := handlers.NewLikeHandler(userPostUseCases, errHandler, logger)
 
 	// Routers

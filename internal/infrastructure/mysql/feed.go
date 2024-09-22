@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
-	"tuiter.com/api/internal/domain/userpost"
+	"tuiter.com/api/internal/domain/feed"
 	"tuiter.com/api/pkg/logging"
 )
 
@@ -15,26 +15,27 @@ const (
 	SELECT t.id as id, parent_id, message, u.name as author, u.avatar_url, pl.user_entity_id IS NOT NULL as liked , 
 	       likes, t.created_at as date 
 		FROM tuits as t
-		    LEFT JOIN (SELECT user_entity_id, tuit_entity_id FROM tuit_likes) pl on t.id = pl.tuit_entity_id AND pl.user_entity_id = ?         
+		    LEFT JOIN (SELECT user_entity_id, tuit_entity_id FROM tuit_likes) pl 
+		on t.id = pl.tuit_entity_id AND pl.user_entity_id = ?         
 		    JOIN users u ON t.author_id = u.id
 	`
-	projectedPostByIDQuery = projectedPostPartialQuery + "WHERE p.id = ?"
+	projectedPostByIDQuery = projectedPostPartialQuery + "WHERE t.id = ?"
 )
 
-func NewUserPostRepository(engine *gorm.DB, logger logging.ContextualLogger) *UserPostRepository {
-	return &UserPostRepository{
+func NewFeedRepository(engine *gorm.DB, logger logging.ContextualLogger) *FeedRepository {
+	return &FeedRepository{
 		dbEngine: engine,
 		logger:   logger,
 	}
 }
 
-type UserPostRepository struct {
+type FeedRepository struct {
 	dbEngine *gorm.DB
 	logger   logging.ContextualLogger
 }
 
-func (u UserPostRepository) GetByID(ctx context.Context, userID int, postID int) (*userpost.UserPost, error) {
-	var res *userpost.UserPost
+func (u FeedRepository) GetByID(ctx context.Context, userID int, postID int) (*feed.Feed, error) {
+	var res *feed.Feed
 	txResult := u.dbEngine.Raw(
 		projectedPostByIDQuery+";",
 		userID,
@@ -49,15 +50,15 @@ func (u UserPostRepository) GetByID(ctx context.Context, userID int, postID int)
 	return res, txResult.Error
 }
 
-func (u UserPostRepository) ListByPage(ctx context.Context, userID int, page int) ([]*userpost.UserPost, error) {
-	var res []*userpost.UserPost
+func (u FeedRepository) ListByPage(ctx context.Context, userID int, page int) ([]*feed.Feed, error) {
+	var res []*feed.Feed
 
 	if page <= 0 {
 		page = 1
 	}
 
 	offset := (page - 1) * postsPerPage
-	txResult := u.selectUserPosts(userID, offset).Scan(&res)
+	txResult := u.selectFeed(userID, offset).Scan(&res)
 
 	if txResult.Error != nil {
 		u.logger.Printf(ctx, "syserror from database when listing posts by page %v", txResult.Error)
@@ -68,7 +69,7 @@ func (u UserPostRepository) ListByPage(ctx context.Context, userID int, page int
 	return res, nil
 }
 
-func (u UserPostRepository) selectUserPosts(userID int, offset int) *gorm.DB {
+func (u FeedRepository) selectFeed(userID int, offset int) *gorm.DB {
 	return u.dbEngine.Raw(
 		paginatedQuery(projectedPostPartialQuery),
 		userID,

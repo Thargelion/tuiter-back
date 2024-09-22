@@ -13,6 +13,15 @@ func (u *UserEntity) TableName() string {
 	return "users"
 }
 
+func (u *UserEntity) ToModel() user.User {
+	return user.User{
+		ID:        u.User.ID,
+		Name:      u.User.Name,
+		Email:     u.Email,
+		AvatarURL: u.User.AvatarURL,
+	}
+}
+
 type UserEntity struct {
 	user.User
 	Email string `gorm:"index:idx_email,unique"`

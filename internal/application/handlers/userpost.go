@@ -6,13 +6,13 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
-	"tuiter.com/api/internal/domain/userpost"
+	"tuiter.com/api/internal/domain/feed"
 	"tuiter.com/api/pkg/logging"
 	"tuiter.com/api/pkg/security"
 )
 
 func NewUserTuitHandler(
-	useCases userpost.UseCases,
+	useCases feed.UseCases,
 	claimsExtractor security.TokenClaimsExtractor,
 	errRenderer ErrorRenderer,
 	logger logging.ContextualLogger,
@@ -26,7 +26,7 @@ func NewUserTuitHandler(
 }
 
 type UserTuitHandler struct {
-	useCases        userpost.UseCases
+	useCases        feed.UseCases
 	claimsExtractor security.TokenClaimsExtractor
 	errorRenderer   ErrorRenderer
 	logger          logging.ContextualLogger
@@ -40,7 +40,7 @@ type UserTuitHandler struct {
 // @Param page query int false "Page"
 // @Param id path int true "User ID"
 // @Produce json
-// @Success 200 {array} userpost.UserPost
+// @Success 200 {array} feed.Feed
 // @Router /me/feed [get].
 func (l *UserTuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
 	page, err := strconv.Atoi(request.URL.Query().Get("page"))
@@ -84,11 +84,11 @@ type like struct {
 }
 
 type userPostPayload struct {
-	*userpost.UserPost
+	*feed.Feed
 }
 
 func (u *userPostPayload) Bind(_ *http.Request) error {
-	if u.UserPost == nil {
+	if u.Feed == nil {
 		return errInvalidRequest
 	}
 
@@ -96,12 +96,12 @@ func (u *userPostPayload) Bind(_ *http.Request) error {
 }
 
 func (u *userPostPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
-	u.Liked = u.UserPost.Liked
+	u.Liked = u.Feed.Liked
 
 	return nil
 }
 
-func newUserPostList(posts []*userpost.UserPost) []render.Renderer {
+func newUserPostList(posts []*feed.Feed) []render.Renderer {
 	list := []render.Renderer{}
 
 	for _, userPost := range posts {

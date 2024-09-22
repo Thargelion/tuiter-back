@@ -215,7 +215,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/userpost.UserPost"
+                                "$ref": "#/definitions/userpost.Feed"
                             }
                         }
                     }
@@ -325,7 +325,7 @@ const docTemplate = `{
                 }
             }
         },
-        "userpost.UserPost": {
+        "userpost.Feed": {
             "type": "object",
             "properties": {
                 "author": {

@@ -16,9 +16,28 @@ func (te *TuitEntity) TableName() string {
 	return "tuits"
 }
 
+func NewTuitFromModel(t *tuit.Tuit) *TuitEntity {
+	return &TuitEntity{
+		Tuit:     *t,
+		Message:  t.Message,
+		AuthorID: int(t.Author.ID),
+	}
+}
+
+func (te *TuitEntity) ToModel() *tuit.Tuit {
+	return &tuit.Tuit{
+		ID:        te.Model.ID,
+		ParentID:  te.ParentID,
+		Message:   te.Message,
+		Author:    te.Author.ToModel(),
+		Likes:     te.Likes,
+		CreatedAt: te.Model.CreatedAt,
+	}
+}
+
 type TuitEntity struct {
 	gorm.Model
-	tuit.Post
+	tuit.Tuit
 	ParentID *int
 	Message  string
 	AuthorID int
@@ -36,8 +55,8 @@ type PostRepository struct {
 	logger   logging.ContextualLogger
 }
 
-func (r *PostRepository) Create(_ context.Context, post *tuit.Post) error {
-	res := r.database.Create(post)
+func (r *PostRepository) Create(_ context.Context, t *tuit.Tuit) error {
+	res := r.database.Create(NewTuitFromModel(t))
 
 	if res.Error != nil {
 		return fmt.Errorf("syserror creating tuit %w", res.Error)
@@ -46,8 +65,8 @@ func (r *PostRepository) Create(_ context.Context, post *tuit.Post) error {
 	return nil
 }
 
-func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.Post, error) {
-	res := make([]*tuit.Post, 0)
+func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.Tuit, error) {
+	res := make([]*tuit.Tuit, 0)
 
 	pageNumber, _ := strconv.Atoi(pageID)
 
@@ -65,15 +84,15 @@ func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.P
 	return res, nil
 }
 
-func (r *PostRepository) AddLike(ctx context.Context, postID int, userID int) error {
-	selectedPost, err := r.FindByID(ctx, postID)
+func (r *PostRepository) AddLike(ctx context.Context, userID int, tuitID int) error {
+	selectedTuit, err := r.FindByID(ctx, tuitID)
 	if err != nil {
 		r.logger.Printf(ctx, "tuit not found when adding like %v", err)
 
 		return fmt.Errorf("tuit not found when adding like %w", err)
 	}
 
-	selectedPost.Likes++
+	selectedTuit.Likes++
 
 	mainTx := r.database.Begin()
 
@@ -83,7 +102,9 @@ func (r *PostRepository) AddLike(ctx context.Context, postID int, userID int) er
 		}
 	}()
 
-	err = mainTx.Save(selectedPost).Error
+	entity := NewTuitFromModel(selectedTuit)
+
+	err = mainTx.Save(entity).Error
 	if err != nil {
 		mainTx.Rollback()
 		r.logger.Printf(ctx, "syserror from database when adding like %v", err)
@@ -91,7 +112,7 @@ func (r *PostRepository) AddLike(ctx context.Context, postID int, userID int) er
 		return fmt.Errorf("syserror from database when adding like %w", err)
 	}
 
-	err = mainTx.Exec("INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)", postID, userID).Error
+	err = mainTx.Exec("INSERT INTO tuit_likes (tuit_entity_id, user_entity_id) VALUES (?, ?)", tuitID, userID).Error
 	if err != nil {
 		mainTx.Rollback()
 		r.logger.Printf(ctx, "syserror from database when registering author and tuit %v", err)
@@ -102,48 +123,42 @@ func (r *PostRepository) AddLike(ctx context.Context, postID int, userID int) er
 	return mainTx.Commit().Error
 }
 
-func (r *PostRepository) RemoveLike(ctx context.Context, postID int, userID int) error {
-	selectedPost, err := r.FindByID(ctx, postID)
+func (r *PostRepository) RemoveLike(ctx context.Context, userID int, tuitID int) error {
+	selectedTuit, err := r.FindByID(ctx, tuitID)
 	if err != nil {
 		r.logger.Printf(ctx, "tuit not found when adding like %v", err)
 
 		return fmt.Errorf("tuit not found when adding like %w", err)
 	}
 
-	selectedPost.Likes--
+	selectedTuit.Likes--
 
-	mainTx := r.database.Begin()
+	return r.database.Transaction(func(tx *gorm.DB) error {
+		entity := NewTuitFromModel(selectedTuit)
 
-	defer func() {
-		if r := recover(); r != nil {
-			mainTx.Rollback()
+		err = tx.Save(entity).Error
+		if err != nil {
+			r.logger.Printf(ctx, "syserror from database when adding like %v", err)
+
+			return fmt.Errorf("syserror from database when adding like %w", err)
 		}
-	}()
 
-	err = mainTx.Save(selectedPost).Error
-	if err != nil {
-		mainTx.Rollback()
-		r.logger.Printf(ctx, "syserror from database when adding like %v", err)
+		err = tx.Exec(`
+		DELETE FROM tuit_likes WHERE (tuit_likes.tuit_entity_id = ? AND tuit_likes.user_entity_id = ?)
+		`, tuitID, userID).Error
+		if err != nil {
+			r.logger.Printf(ctx, "syserror from database when registering author and tuit %v", err)
 
-		return fmt.Errorf("syserror from database when adding like %w", err)
-	}
+			return fmt.Errorf("syserror from database when registering author and tuit %w", err)
+		}
 
-	err = mainTx.Exec(`
-		DELETE FROM post_likes WHERE (post_likes.post_id = ? AND post_likes.user_id = ?)
-		`, postID, userID).Error
-	if err != nil {
-		mainTx.Rollback()
-		r.logger.Printf(ctx, "syserror from database when registering author and tuit %v", err)
-
-		return fmt.Errorf("syserror from database when registering author and tuit %w", err)
-	}
-
-	return mainTx.Commit().Error
+		return nil
+	})
 }
 
-func (r *PostRepository) FindByID(ctx context.Context, postID int) (*tuit.Post, error) {
-	res := &tuit.Post{}
-	txResult := r.database.First(res, postID)
+func (r *PostRepository) FindByID(ctx context.Context, tuitId int) (*tuit.Tuit, error) {
+	res := &TuitEntity{}
+	txResult := r.database.Preload("Author").First(res, tuitId)
 
 	if txResult.Error != nil {
 		r.logger.Printf(ctx, "syserror from database when finding tuit by id %v", txResult.Error)
@@ -151,5 +166,5 @@ func (r *PostRepository) FindByID(ctx context.Context, postID int) (*tuit.Post, 
 		return nil, fmt.Errorf("syserror from database when finding tuit by id %w", txResult.Error)
 	}
 
-	return res, nil
+	return res.ToModel(), nil
 }

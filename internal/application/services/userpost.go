@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"tuiter.com/api/internal/domain/feed"
 	"tuiter.com/api/internal/domain/tuit"
-	"tuiter.com/api/internal/domain/userpost"
 )
 
-func NewUserPostService(tuitRepo tuit.Repository, userPostRepo userpost.Repository) *UserPostService {
+func NewUserPostService(tuitRepo tuit.Repository, userPostRepo feed.Repository) *UserPostService {
 	return &UserPostService{
 		tuitRepository:     tuitRepo,
 		userPostRepository: userPostRepo,
@@ -17,10 +17,10 @@ func NewUserPostService(tuitRepo tuit.Repository, userPostRepo userpost.Reposito
 
 type UserPostService struct {
 	tuitRepository     tuit.Repository
-	userPostRepository userpost.Repository
+	userPostRepository feed.Repository
 }
 
-func (u *UserPostService) Paginate(ctx context.Context, userID int, page int) ([]*userpost.UserPost, error) {
+func (u *UserPostService) Paginate(ctx context.Context, userID int, page int) ([]*feed.Feed, error) {
 	userTuitPage, err := u.userPostRepository.ListByPage(ctx, page, userID)
 
 	if err != nil {
@@ -30,7 +30,7 @@ func (u *UserPostService) Paginate(ctx context.Context, userID int, page int) ([
 	return userTuitPage, nil
 }
 
-func (u *UserPostService) AddLike(ctx context.Context, userID int, tuitID int) (*userpost.UserPost, error) {
+func (u *UserPostService) AddLike(ctx context.Context, userID int, tuitID int) (*feed.Feed, error) {
 	err := u.tuitRepository.AddLike(ctx, userID, tuitID)
 
 	if err != nil {
@@ -46,7 +46,7 @@ func (u *UserPostService) AddLike(ctx context.Context, userID int, tuitID int) (
 	return userTuit, nil
 }
 
-func (u *UserPostService) RemoveLike(ctx context.Context, userID int, tuitID int) (*userpost.UserPost, error) {
+func (u *UserPostService) RemoveLike(ctx context.Context, userID int, tuitID int) (*feed.Feed, error) {
 	err := u.tuitRepository.RemoveLike(ctx, userID, tuitID)
 
 	if err != nil {
