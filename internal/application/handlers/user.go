@@ -30,7 +30,7 @@ type User struct {
 	logger        logging.ContextualLogger
 }
 
-func (r *User) Search(writer http.ResponseWriter, request *http.Request) {
+func (u *User) Search(writer http.ResponseWriter, request *http.Request) {
 	var filter userFilter
 
 	var decoder = schema.NewDecoder()
@@ -41,9 +41,9 @@ func (r *User) Search(writer http.ResponseWriter, request *http.Request) {
 	err := decoder.Decode(&filter, queryValues)
 
 	if err != nil {
-		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
+		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
 		if err != nil {
-			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+			u.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
 
 			return
 		}
@@ -53,12 +53,12 @@ func (r *User) Search(writer http.ResponseWriter, request *http.Request) {
 
 	rawFilter, _ := json.Marshal(filter) //nolint:errchkjson
 	_ = json.Unmarshal(rawFilter, &query)
-	users, err := r.useCases.Search(request.Context(), query)
+	users, err := u.useCases.Search(request.Context(), query)
 
 	if err != nil {
-		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
+		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
 		if err != nil {
-			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+			u.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
 
 			return
 		}
@@ -68,7 +68,7 @@ func (r *User) Search(writer http.ResponseWriter, request *http.Request) {
 
 	err = render.RenderList(writer, request, newUserList(users))
 	if err != nil {
-		r.logger.Printf(request.Context(), "syserror rendering user list: %v", err)
+		u.logger.Printf(request.Context(), "syserror rendering user list: %v", err)
 
 		return
 	}
@@ -83,14 +83,14 @@ func (r *User) Search(writer http.ResponseWriter, request *http.Request) {
 // @Param id path string true "User ID"
 // @Success 200 {object} userPayload
 // @Router /users/{id} [get].
-func (r *User) FindUserByID(writer http.ResponseWriter, request *http.Request) {
+func (u *User) FindUserByID(writer http.ResponseWriter, request *http.Request) {
 	id := chi.URLParam(request, "id")
-	userFound, err := r.useCases.FindUserByID(request.Context(), id)
+	userFound, err := u.useCases.FindUserByID(request.Context(), id)
 
 	if err != nil {
-		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
+		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
 		if err != nil {
-			r.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+			u.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
 
 			return
 		}
@@ -100,25 +100,25 @@ func (r *User) FindUserByID(writer http.ResponseWriter, request *http.Request) {
 
 	err = render.Render(writer, request, newUserPayload(userFound))
 	if err != nil {
-		r.logger.Printf(request.Context(), "syserror rendering user: %v", err)
+		u.logger.Printf(request.Context(), "syserror rendering user: %v", err)
 
 		return
 	}
 }
 
-// CreateUser Create Users godoc
-// @Summary Create a new user
-// @Description Create a new user
+// CreateUser create Users godoc
+// @Summary create a new user
+// @Description create a new user
 // @Tags users
 // @Accept json
 // @Produce json
 // @Param user body userCreatePayload true "User"
-// @Success 201 {object} userPayload
+// @Success 200 {object} loggedUserPayload
 // @Router /users [post].
-func (r *User) CreateUser(writer http.ResponseWriter, request *http.Request) {
+func (u *User) CreateUser(w http.ResponseWriter, r *http.Request) {
 	payload := &userCreatePayload{}
-	if err := render.Bind(request, payload); err != nil {
-		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
+	if err := render.Bind(r, payload); err != nil {
+		err := render.Render(w, r, u.errorRenderer.RenderError(err))
 		if err != nil {
 			return
 		}
@@ -126,9 +126,9 @@ func (r *User) CreateUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	newUser, err := r.useCases.Create(request.Context(), payload.ToUser())
+	newUser, err := u.useCases.CreateAndLogin(r.Context(), payload.ToUser())
 	if err != nil {
-		err := render.Render(writer, request, r.errorRenderer.RenderError(err))
+		err := render.Render(w, r, u.errorRenderer.RenderError(err))
 		if err != nil {
 			return
 		}
@@ -136,37 +136,14 @@ func (r *User) CreateUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err = render.Render(writer, request, newUserPayload(newUser))
-	if err != nil {
-		return
-	}
+	_ = render.Render(w, r, newLoggedUserPayload(newUser))
 }
 
 type userCreatePayload struct {
 	Name      string `json:"name"       validate:"required"`
 	AvatarURL string `json:"avatar_url"`
 	Email     string `json:"email"      validate:"required,email"`
-}
-
-func (u *userCreatePayload) ToUser() *user.User {
-	return &user.User{
-		Name:      u.Name,
-		AvatarURL: u.AvatarURL,
-		Email:     u.Email,
-	}
-}
-
-type userPayload struct {
-	Name      string `json:"name"`
-	AvatarURL string `json:"avatar_url"`
-	Email     string `json:"email"`
-}
-
-func newUserPayload(user *user.User) *userPayload {
-	return &userPayload{
-		Name:      user.Name,
-		AvatarURL: user.AvatarURL,
-	}
+	Password  string `json:"password"   validate:"required"`
 }
 
 func (u *userCreatePayload) Bind(_ *http.Request) error {
@@ -180,8 +157,19 @@ func (u *userCreatePayload) Bind(_ *http.Request) error {
 	return nil
 }
 
-type userFilter struct {
-	Name *string `json:"name,omitempty"`
+func (u *userCreatePayload) ToUser() *user.User {
+	return &user.User{
+		Name:      u.Name,
+		AvatarURL: u.AvatarURL,
+		Email:     u.Email,
+		Password:  u.Password,
+	}
+}
+
+type userPayload struct {
+	Name      string `json:"name"`
+	AvatarURL string `json:"avatar_url"`
+	Email     string `json:"email"`
 }
 
 func (u *userPayload) Bind(_ *http.Request) error {
@@ -190,6 +178,36 @@ func (u *userPayload) Bind(_ *http.Request) error {
 
 func (u *userPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
 	return nil
+}
+
+func newUserPayload(user *user.User) *userPayload {
+	return &userPayload{
+		Name:      user.Name,
+		AvatarURL: user.AvatarURL,
+		Email:     user.Email,
+	}
+}
+
+type loggedUserPayload struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
+
+func (l *loggedUserPayload) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func newLoggedUserPayload(logged *user.Logged) *loggedUserPayload {
+	return &loggedUserPayload{
+		Name:  logged.Name,
+		Email: logged.Email,
+		Token: logged.Token,
+	}
+}
+
+type userFilter struct {
+	Name *string `json:"name,omitempty"`
 }
 
 func newUserList(users []*user.User) []render.Renderer {

@@ -9,6 +9,25 @@ import (
 	"tuiter.com/api/pkg/logging"
 )
 
+func (u *UserEntity) TableName() string {
+	return "users"
+}
+
+func (u *UserEntity) ToModel() user.User {
+	return user.User{
+		ID:        u.User.ID,
+		Name:      u.User.Name,
+		Email:     u.Email,
+		AvatarURL: u.User.AvatarURL,
+	}
+}
+
+type UserEntity struct {
+	user.User
+	Email string `gorm:"index:idx_email,unique"`
+	gorm.Model
+}
+
 func NewUserRepository(creator *gorm.DB, logger logging.ContextualLogger) *UserRepository {
 	return &UserRepository{database: creator, logger: logger}
 }
@@ -61,4 +80,18 @@ func (r *UserRepository) Create(ctx context.Context, user *user.User) (*user.Use
 	}
 
 	return user, nil
+}
+
+func (r *UserRepository) FindByEmail(
+	_ context.Context,
+	email string,
+) (*user.User, error) {
+	var res = &user.User{}
+	txResult := r.database.First(&res, "email = ?", email)
+
+	if txResult.Error != nil {
+		return nil, fmt.Errorf("syserror finding user on database %s %w", email, txResult.Error)
+	}
+
+	return res, nil
 }

@@ -1,29 +1,36 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/render"
+	"github.com/golang-jwt/jwt/v5"
 	"tuiter.com/api/internal/domain/tuit"
+	"tuiter.com/api/internal/domain/user"
 	"tuiter.com/api/pkg/logging"
+	"tuiter.com/api/pkg/security"
 )
 
 func NewTuitHandler(
 	repository tuit.Repository,
+	claimsExtractor security.TokenClaimsExtractor,
 	errRenderer ErrorRenderer,
 	logger logging.ContextualLogger,
 ) *TuitHandler {
 	return &TuitHandler{
-		repo:          repository,
-		errorRenderer: errRenderer,
-		logger:        logger,
+		repo:            repository,
+		claimsExtractor: claimsExtractor,
+		errorRenderer:   errRenderer,
+		logger:          logger,
 	}
 }
 
 type TuitHandler struct {
-	repo          tuit.Repository
-	errorRenderer ErrorRenderer
-	logger        logging.ContextualLogger
+	repo            tuit.Repository
+	claimsExtractor security.TokenClaimsExtractor
+	errorRenderer   ErrorRenderer
+	logger          logging.ContextualLogger
 }
 
 type tuitPayload struct {
@@ -34,12 +41,11 @@ type tuitPayload struct {
 	Likes    int          `json:"likes"`
 }
 
-func newTuitPayload(post *tuit.Post) *tuitPayload {
+func newTuitPayload(post *tuit.Tuit) *tuitPayload {
 	return &tuitPayload{
 		commonPayload: commonPayload{
 			ID:        post.ID,
 			CreatedAt: post.CreatedAt,
-			UpdatedAt: post.UpdatedAt,
 		},
 		ParentID: post.ParentID,
 		Message:  post.Message,
@@ -49,7 +55,7 @@ func newTuitPayload(post *tuit.Post) *tuitPayload {
 }
 
 type createTuitPayload struct {
-	AuthorID int    `json:"author_id"`
+	AuthorID uint   `json:"author_id"`
 	Message  string `json:"message"`
 }
 
@@ -61,10 +67,10 @@ func (c createTuitPayload) Bind(_ *http.Request) error {
 	return nil
 }
 
-func (c createTuitPayload) toPost() *tuit.Post {
-	return &tuit.Post{
-		Message:  c.Message,
-		AuthorID: c.AuthorID,
+func (c createTuitPayload) toModel() *tuit.Tuit {
+	return &tuit.Tuit{
+		Message: c.Message,
+		Author:  user.User{},
 	}
 }
 
@@ -76,7 +82,7 @@ func (u *tuitPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
 	return nil
 }
 
-func newPostList(posts []*tuit.Post) []render.Renderer {
+func newPostList(posts []*tuit.Tuit) []render.Renderer {
 	var list []render.Renderer
 
 	for _, data := range posts {
@@ -95,9 +101,9 @@ func newPostList(posts []*tuit.Post) []render.Renderer {
 // @Param page_id query string true "Page ID"
 // @Success 200 {array} tuitPayload
 // @Router /tuits [get].
-func (r *TuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
+func (t *TuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
 	pageID := request.URL.Query().Get(string(PageIDKey))
-	posts, err := r.repo.ListByPage(request.Context(), pageID)
+	posts, err := t.repo.ListByPage(request.Context(), pageID)
 
 	if err != nil {
 		err := render.Render(writer, request, ErrInvalidRequest(err))
@@ -114,10 +120,10 @@ func (r *TuitHandler) Search(writer http.ResponseWriter, request *http.Request) 
 	}
 }
 
-func (r *TuitHandler) CreateTuit(writer http.ResponseWriter, request *http.Request) {
+func (t *TuitHandler) CreateTuit(w http.ResponseWriter, r *http.Request) {
 	payload := &createTuitPayload{}
-	if err := render.Bind(request, payload); err != nil {
-		err := render.Render(writer, request, ErrInvalidRequest(err))
+	if err := render.Bind(r, payload); err != nil {
+		err := render.Render(w, r, ErrInvalidRequest(err))
 		if err != nil {
 			return
 		}
@@ -125,10 +131,25 @@ func (r *TuitHandler) CreateTuit(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err := r.repo.Create(request.Context(), payload.toPost())
+	token, ok := r.Context().Value("token").(*jwt.Token)
+
+	if !ok {
+		_ = render.Render(w, r, ErrInvalidRequest(errors.New("token not found")))
+	}
+
+	claims, err := t.claimsExtractor.ExtractClaims(token)
+	if err != nil {
+		_ = render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	newTuit := payload.toModel()
+	newTuit.Author.ID = uint(claims["sub"].(float64))
+
+	err = t.repo.Create(r.Context(), newTuit)
 
 	if err != nil {
-		err := render.Render(writer, request, ErrInvalidRequest(err))
+		err := render.Render(w, r, ErrInvalidRequest(err))
 
 		if err != nil {
 			return
@@ -137,7 +158,7 @@ func (r *TuitHandler) CreateTuit(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err = render.Render(writer, request, newResponse(http.StatusCreated, "Post created"))
+	err = render.Render(w, r, newResponse(http.StatusCreated, "Tuit created"))
 	if err != nil {
 		return
 	}

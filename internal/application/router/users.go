@@ -17,21 +17,33 @@ type userPostHandler interface {
 	Search(writer http.ResponseWriter, request *http.Request)
 }
 
-func NewUserRouter(userHandler userHandler, userPostHandler userPostHandler) *UserRouter {
+func NewUserRouter(userPostHandler userPostHandler) *UserRouter {
 	return &UserRouter{
-		user:     userHandler,
 		userPost: userPostHandler,
 	}
 }
 
 func (ur *UserRouter) Route(router chi.Router) {
-	router.Get("/", ur.user.Search)
-	router.Get("/{id}", ur.user.FindUserByID)
-	router.Post("/", ur.user.CreateUser)
-	router.With(handlers.Pagination).Get("/{id}/tuits", ur.userPost.Search)
+	router.With(handlers.Pagination).Get("/feed", ur.userPost.Search)
 }
 
 type UserRouter struct {
-	user     userHandler
 	userPost userPostHandler
+}
+
+func NewPublicUserRouter(userHandler userHandler) *PublicUserRouter {
+	return &PublicUserRouter{
+		user: userHandler,
+	}
+}
+
+func (pur *PublicUserRouter) Route(router chi.Router) {
+	router.Get("/", pur.user.Search)
+	router.Get("/{id}", pur.user.FindUserByID)
+	router.Post("/", pur.user.CreateUser)
+}
+
+type PublicUserRouter struct {
+	userPost userPostHandler
+	user     userHandler
 }
