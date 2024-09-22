@@ -10,7 +10,7 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {
-            "email": "madepietro@unlam.edu.ar"
+            "email": "madepietro@unlam.edu.ar."
         },
         "version": "{{.Version}}"
     },
@@ -83,6 +83,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/me/feed": {
+            "get": {
+                "description": "Search Users Tuits will return a list of tuits from the user perspective. This means that the user will",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tuits"
+                ],
+                "summary": "Search Users' tuits",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/feed.Feed"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/tuits": {
             "get": {
                 "description": "Search tuits",
@@ -93,7 +131,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "posts"
+                    "tuits"
                 ],
                 "summary": "Search tuits",
                 "parameters": [
@@ -143,10 +181,10 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.userPayload"
+                            "$ref": "#/definitions/handlers.loggedUserPayload"
                         }
                     }
                 }
@@ -183,120 +221,10 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/users/{id}/tuits": {
-            "get": {
-                "description": "Search Users Tuits will return a list of tuits from the user perspective. This means that the user will",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tuits"
-                ],
-                "summary": "Search Users' tuits",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/userpost.Feed"
-                            }
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "handlers.like": {
-            "type": "object",
-            "properties": {
-                "tuit_id": {
-                    "type": "integer"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handlers.tuitPayload": {
-            "type": "object",
-            "properties": {
-                "author": {
-                    "$ref": "#/definitions/handlers.userPayload"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "deleted_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "likes": {
-                    "type": "integer"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "parent_id": {
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.userCreatePayload": {
-            "type": "object",
-            "required": [
-                "email",
-                "name"
-            ],
-            "properties": {
-                "avatar_url": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.userPayload": {
-            "type": "object",
-            "properties": {
-                "avatar_url": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.userPostPayload": {
+        "feed.Feed": {
             "type": "object",
             "properties": {
                 "author": {
@@ -325,7 +253,106 @@ const docTemplate = `{
                 }
             }
         },
-        "userpost.Feed": {
+        "handlers.like": {
+            "type": "object",
+            "properties": {
+                "tuit_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.loggedUserPayload": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.loginPayload": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.tuitPayload": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/handlers.userPayload"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.userCreatePayload": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.userPayload": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.userPostPayload": {
             "type": "object",
             "properties": {
                 "author": {
