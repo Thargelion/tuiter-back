@@ -5,20 +5,29 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/schema"
 	"tuiter.com/api/internal/domain/user"
 	"tuiter.com/api/pkg/logging"
+	"tuiter.com/api/pkg/security"
 )
 
 var errInvalidRequest = errors.New("missing required fields")
 
-func NewUserHandler(useCases user.UseCases, errRenderer ErrorRenderer, logger logging.ContextualLogger) *User {
+func NewUserHandler(
+	useCases user.UseCases,
+	userExtractor security.UserExtractor,
+	errRenderer ErrorRenderer,
+	logger logging.ContextualLogger,
+) *User {
 	return &User{
 		useCases:      useCases,
+		userExtractor: userExtractor,
 		errorRenderer: errRenderer,
 		logger:        logger,
 	}
@@ -26,6 +35,7 @@ func NewUserHandler(useCases user.UseCases, errRenderer ErrorRenderer, logger lo
 
 type User struct {
 	useCases      user.UseCases
+	userExtractor security.UserExtractor
 	errorRenderer ErrorRenderer
 	logger        logging.ContextualLogger
 }
@@ -86,6 +96,46 @@ func (u *User) Search(writer http.ResponseWriter, request *http.Request) {
 func (u *User) FindUserByID(writer http.ResponseWriter, request *http.Request) {
 	id := chi.URLParam(request, "id")
 	userFound, err := u.useCases.FindUserByID(request.Context(), id)
+
+	if err != nil {
+		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
+		if err != nil {
+			u.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
+
+			return
+		}
+
+		return
+	}
+
+	err = render.Render(writer, request, newUserPayload(userFound))
+	if err != nil {
+		u.logger.Printf(request.Context(), "syserror rendering user: %v", err)
+
+		return
+	}
+}
+
+// MeUser godoc
+// @Summary Get a user by ID
+// @Description Get a user by ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} userPayload
+// @Router /me [get].
+func (u *User) MeUser(writer http.ResponseWriter, request *http.Request) {
+	token, ok := request.Context().Value("token").(*jwt.Token)
+
+	if !ok {
+		_ = render.Render(writer, request, ErrInvalidRequest(errors.New("unauthorized")))
+
+		return
+	}
+
+	userId, err := u.userExtractor.ExtractUserId(token)
+	userFound, err := u.useCases.FindUserByID(request.Context(), strconv.Itoa(userId))
 
 	if err != nil {
 		err := render.Render(writer, request, u.errorRenderer.RenderError(err))

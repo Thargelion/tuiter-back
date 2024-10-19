@@ -43,6 +43,9 @@ type UserTuitHandler struct {
 // @Success 200 {array} feed.Feed
 // @Router /me/feed [get].
 func (l *UserTuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
+	test := request.URL.Query().Get("page")
+
+	l.logger.Printf(request.Context(), "page: %s", test)
 	page, err := strconv.Atoi(request.URL.Query().Get("page"))
 
 	if err != nil {
@@ -76,11 +79,6 @@ func (l *UserTuitHandler) Search(writer http.ResponseWriter, request *http.Reque
 	}
 
 	_ = render.RenderList(writer, request, newUserPostList(userPosts))
-}
-
-type like struct {
-	UserID int `json:"user_id"`
-	TuitID int `json:"tuit_id"`
 }
 
 type userPostPayload struct {

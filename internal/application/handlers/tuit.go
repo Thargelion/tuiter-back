@@ -14,23 +14,23 @@ import (
 
 func NewTuitHandler(
 	repository tuit.Repository,
-	claimsExtractor security.TokenClaimsExtractor,
+	userExtractor security.UserExtractor,
 	errRenderer ErrorRenderer,
 	logger logging.ContextualLogger,
 ) *TuitHandler {
 	return &TuitHandler{
-		repo:            repository,
-		claimsExtractor: claimsExtractor,
-		errorRenderer:   errRenderer,
-		logger:          logger,
+		repo:          repository,
+		userExtractor: userExtractor,
+		errorRenderer: errRenderer,
+		logger:        logger,
 	}
 }
 
 type TuitHandler struct {
-	repo            tuit.Repository
-	claimsExtractor security.TokenClaimsExtractor
-	errorRenderer   ErrorRenderer
-	logger          logging.ContextualLogger
+	repo          tuit.Repository
+	userExtractor security.UserExtractor
+	errorRenderer ErrorRenderer
+	logger        logging.ContextualLogger
 }
 
 type tuitPayload struct {
@@ -137,14 +137,14 @@ func (t *TuitHandler) CreateTuit(w http.ResponseWriter, r *http.Request) {
 		_ = render.Render(w, r, ErrInvalidRequest(errors.New("token not found")))
 	}
 
-	claims, err := t.claimsExtractor.ExtractClaims(token)
+	userId, err := t.userExtractor.ExtractUserId(token)
 	if err != nil {
 		_ = render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
 
 	newTuit := payload.toModel()
-	newTuit.Author.ID = uint(claims["sub"].(float64))
+	newTuit.Author.ID = uint(userId)
 
 	err = t.repo.Create(r.Context(), newTuit)
 
@@ -162,12 +162,4 @@ func (t *TuitHandler) CreateTuit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-}
-
-func (l like) Bind(_ *http.Request) error {
-	if l.UserID == 0 || l.TuitID == 0 {
-		return errInvalidRequest
-	}
-
-	return nil
 }

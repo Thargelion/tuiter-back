@@ -115,23 +115,26 @@ func main() {
 
 	// Handlers
 	loginHandler := handlers.NewLogin(authenticator, errHandler)
-	userHandler := handlers.NewUserHandler(userService, errHandler, logger)
+	userHandler := handlers.NewUserHandler(userService, tokenValidator, errHandler, logger)
 	userPostHandler := handlers.NewUserTuitHandler(userPostUseCases, tokenValidator, errHandler, logger)
 	tuitHandler := handlers.NewTuitHandler(tuitRepo, tokenValidator, errHandler, logger)
-	likeHandler := handlers.NewLikeHandler(userPostUseCases, errHandler, logger)
+	likeHandler := handlers.NewLikeHandler(userPostUseCases, tokenValidator, errHandler, logger)
 
 	// Routers
-	userRouter := router.NewUserRouter(userPostHandler)
+	userRouter := router.NewUserRouter(userPostHandler, userHandler)
 	publicUserRouter := router.NewPublicUserRouter(userHandler)
 	tuitRouter := router.NewTuitRouter(tuitHandler)
-	likeRouter := router.NewLikeRouter(likeHandler)
 	loginRouter := router.NewLoginRouter(loginHandler)
+	likesRouter := router.NewLikeRouter(likeHandler)
 
 	usersRouter := chi.NewRouter()
 	usersRouter.Use(securityMiddleware.Middleware)
 	usersRouter.Route("/tuits", tuitRouter.Route)
-	usersRouter.Route("/likes", likeRouter.Route)
-	usersRouter.Route("/me", userRouter.Route)
+	usersRouter.Route("/me", func(router chi.Router) {
+		router.Route("/", userRouter.Route)
+		router.Route("/tuits/{id}/likes", likesRouter.Route)
+		router.Route("/tuits", tuitRouter.Route)
+	})
 	chiRouter.Route("/v1", func(router chi.Router) {
 		router.Route("/login", loginRouter.Route)
 		router.Route("/users", publicUserRouter.Route)

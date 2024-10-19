@@ -13,3 +13,7 @@ type TokenValidator interface {
 type TokenClaimsExtractor interface {
 	ExtractClaims(token *jwt.Token) (jwt.MapClaims, error)
 }
+
+type UserExtractor interface {
+	ExtractUserId(token *jwt.Token) (int, error)
+}

@@ -7,6 +7,10 @@ import (
 	"tuiter.com/api/internal/application/handlers"
 )
 
+type profileHandler interface {
+	MeUser(writer http.ResponseWriter, request *http.Request)
+}
+
 type userHandler interface {
 	Search(writer http.ResponseWriter, request *http.Request)
 	FindUserByID(writer http.ResponseWriter, request *http.Request)
@@ -17,18 +21,21 @@ type userPostHandler interface {
 	Search(writer http.ResponseWriter, request *http.Request)
 }
 
-func NewUserRouter(userPostHandler userPostHandler) *UserRouter {
+func NewUserRouter(userPostHandler userPostHandler, profileHandler profileHandler) *UserRouter {
 	return &UserRouter{
-		userPost: userPostHandler,
+		userPost:       userPostHandler,
+		profileHandler: profileHandler,
 	}
 }
 
 func (ur *UserRouter) Route(router chi.Router) {
 	router.With(handlers.Pagination).Get("/feed", ur.userPost.Search)
+	router.Get("/profile", ur.profileHandler.MeUser)
 }
 
 type UserRouter struct {
-	userPost userPostHandler
+	userPost       userPostHandler
+	profileHandler profileHandler
 }
 
 func NewPublicUserRouter(userHandler userHandler) *PublicUserRouter {
