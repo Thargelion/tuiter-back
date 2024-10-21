@@ -8,9 +8,9 @@ import (
 
 type Tuit struct {
 	ID        uint
-	ParentID  *int
+	ParentID  *uint
 	Message   string
 	Author    user.User
-	Likes     int
+	Likes     uint
 	CreatedAt time.Time
 }

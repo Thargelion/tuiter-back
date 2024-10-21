@@ -126,7 +126,7 @@ func (u *User) FindUserByID(writer http.ResponseWriter, request *http.Request) {
 // @Success 200 {object} userPayload
 // @Router /me [get].
 func (u *User) MeUser(writer http.ResponseWriter, request *http.Request) {
-	token, ok := request.Context().Value("token").(*jwt.Token)
+	token, ok := request.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
 		_ = render.Render(writer, request, ErrInvalidRequest(errors.New("unauthorized")))

@@ -54,7 +54,7 @@ func (l *UserTuitHandler) Search(writer http.ResponseWriter, request *http.Reque
 		page = 0
 	}
 
-	token, ok := request.Context().Value("token").(*jwt.Token)
+	token, ok := request.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
 		_ = render.Render(writer, request, ErrInvalidRequest(err))

@@ -35,10 +35,10 @@ type TuitHandler struct {
 
 type tuitPayload struct {
 	commonPayload
-	ParentID *int         `json:"parent_id"`
+	ParentID *uint        `json:"parent_id"`
 	Message  string       `json:"message"`
 	Author   *userPayload `json:"author"`
-	Likes    int          `json:"likes"`
+	Likes    uint         `json:"likes"`
 }
 
 func newTuitPayload(post *tuit.Tuit) *tuitPayload {
@@ -131,7 +131,7 @@ func (t *TuitHandler) CreateTuit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, ok := r.Context().Value("token").(*jwt.Token)
+	token, ok := r.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
 		_ = render.Render(w, r, ErrInvalidRequest(errors.New("token not found")))

@@ -51,6 +51,5 @@ func (pur *PublicUserRouter) Route(router chi.Router) {
 }
 
 type PublicUserRouter struct {
-	userPost userPostHandler
-	user     userHandler
+	user userHandler
 }
