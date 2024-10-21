@@ -51,7 +51,8 @@ func main() {
 	// Configure Chi
 	chiRouter.Use(middleware.Recoverer)
 	chiRouter.Use(middleware.Timeout(timeout))
-	chiRouter.Use(handlers.RequestTagger) // Chi already has one -_-
+	chiRouter.Use(handlers.RequestTagger)
+	chiRouter.Use(handlers.ApiValidation)
 	chiRouter.Use(middleware.Logger)
 
 	workDir, _ := os.Getwd()
