@@ -1,5 +1,24 @@
 basePath: /v1
 definitions:
+  feed.Feed:
+    properties:
+      author:
+        type: string
+      avatar_url:
+        type: string
+      date:
+        type: string
+      id:
+        type: integer
+      liked:
+        type: boolean
+      likes:
+        type: integer
+      message:
+        type: string
+      parent_id:
+        type: integer
+    type: object
   handlers.like:
     properties:
       tuit_id:
@@ -7,13 +26,30 @@ definitions:
       user_id:
         type: integer
     type: object
+  handlers.loggedUserPayload:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      token:
+        type: string
+    type: object
+  handlers.loginPayload:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   handlers.tuitPayload:
     properties:
       author:
         $ref: '#/definitions/handlers.userPayload'
       created_at:
-        type: string
-      deleted_at:
         type: string
       id:
         type: integer
@@ -23,8 +59,6 @@ definitions:
         type: string
       parent_id:
         type: integer
-      updated_at:
-        type: string
     type: object
   handlers.userCreatePayload:
     properties:
@@ -34,9 +68,12 @@ definitions:
         type: string
       name:
         type: string
+      password:
+        type: string
     required:
     - email
     - name
+    - password
     type: object
   handlers.userPayload:
     properties:
@@ -66,28 +103,9 @@ definitions:
       parent_id:
         type: integer
     type: object
-  userpost.UserPost:
-    properties:
-      author:
-        type: string
-      avatar_url:
-        type: string
-      date:
-        type: string
-      id:
-        type: integer
-      liked:
-        type: boolean
-      likes:
-        type: integer
-      message:
-        type: string
-      parent_id:
-        type: integer
-    type: object
 info:
   contact:
-    email: madepietro@unlam.edu.ar
+    email: madepietro@unlam.edu.ar.
   description: This is the API for Tuiter, a Twitter clone.
   title: Tuiter API
   version: "1"
@@ -135,6 +153,32 @@ paths:
       summary: Add a like to a tuit
       tags:
       - likes
+  /me/feed:
+    get:
+      description: Search Users Tuits will return a list of tuits from the user perspective.
+        This means that the user will
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/feed.Feed'
+            type: array
+      summary: Search Users' tuits
+      tags:
+      - tuits
   /tuits:
     get:
       consumes:
@@ -157,12 +201,12 @@ paths:
             type: array
       summary: Search tuits
       tags:
-      - posts
+      - tuits
   /users:
     post:
       consumes:
       - application/json
-      description: Create a new user
+      description: create a new user
       parameters:
       - description: User
         in: body
@@ -173,11 +217,11 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
-            $ref: '#/definitions/handlers.userPayload'
-      summary: Create a new user
+            $ref: '#/definitions/handlers.loggedUserPayload'
+      summary: create a new user
       tags:
       - users
   /users/{id}:
@@ -201,32 +245,6 @@ paths:
       summary: Get a user by ID
       tags:
       - users
-  /users/{id}/tuits:
-    get:
-      description: Search Users Tuits will return a list of tuits from the user perspective.
-        This means that the user will
-      parameters:
-      - description: Page
-        in: query
-        name: page
-        type: integer
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/userpost.UserPost'
-            type: array
-      summary: Search Users' tuits
-      tags:
-      - tuits
 schemes:
 - https
 swagger: "2.0"

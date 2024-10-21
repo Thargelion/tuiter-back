@@ -6,10 +6,12 @@ import (
 
 	"tuiter.com/api/internal/domain/avatar"
 	"tuiter.com/api/internal/domain/user"
+	"tuiter.com/api/pkg/security"
 )
 
 type Service struct {
 	userRepo       user.Repository
+	tokenHandler   security.TokenHandler
 	generateAvatar avatar.AddAvatarUseCase
 }
 
@@ -33,7 +35,7 @@ func (c *Service) FindUserByID(ctx context.Context, id string) (*user.User, erro
 	return userByID, nil
 }
 
-func (c *Service) Create(ctx context.Context, user *user.User) (*user.User, error) {
+func (c *Service) create(ctx context.Context, user *user.User) (*user.User, error) {
 	user.AvatarURL = c.generateAvatar.New(user.Name)
 
 	newUser, err := c.userRepo.Create(ctx, user)
@@ -45,6 +47,36 @@ func (c *Service) Create(ctx context.Context, user *user.User) (*user.User, erro
 	return newUser, nil
 }
 
-func NewUserUseCases(userRepo user.Repository, avatarService avatar.UseCases) *Service {
-	return &Service{userRepo: userRepo, generateAvatar: avatarService}
+func (c *Service) CreateAndLogin(ctx context.Context, u *user.User) (*user.Logged, error) {
+	secureUser, err := u.SecureUser()
+
+	if err != nil {
+		return nil, fmt.Errorf("syserror securing user: %w", err)
+	}
+
+	newUser, err := c.create(ctx, secureUser)
+
+	if err != nil {
+		return nil, fmt.Errorf("syserror creating user: %w", err)
+	}
+
+	token, err := c.tokenHandler.GenerateToken(newUser.ID, newUser.Email, newUser.Email)
+
+	if err != nil {
+		return nil, fmt.Errorf("syserror generating token: %w", err)
+	}
+
+	return &user.Logged{User: *newUser, Token: token}, nil
+}
+
+func NewUserService(
+	userRepo user.Repository,
+	tokenHandler security.TokenHandler,
+	avatarService avatar.UseCases,
+) *Service {
+	return &Service{
+		userRepo:       userRepo,
+		tokenHandler:   tokenHandler,
+		generateAvatar: avatarService,
+	}
 }
