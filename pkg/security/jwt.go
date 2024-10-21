@@ -39,7 +39,7 @@ func (j *JWTHandler) GenerateToken(id uint, email string, username string) (stri
 }
 
 func (j *JWTHandler) ValidateToken(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(_ *jwt.Token) (interface{}, error) {
 		return j.secret, nil
 	})
 

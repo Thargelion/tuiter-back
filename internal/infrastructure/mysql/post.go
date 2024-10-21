@@ -20,7 +20,7 @@ func NewTuitFromModel(t *tuit.Tuit) *TuitEntity {
 	return &TuitEntity{
 		Tuit:     *t,
 		Message:  t.Message,
-		AuthorID: int(t.Author.ID),
+		AuthorID: t.Author.ID,
 	}
 }
 
@@ -38,12 +38,12 @@ func (te *TuitEntity) ToModel() *tuit.Tuit {
 type TuitEntity struct {
 	gorm.Model
 	tuit.Tuit
-	ParentID *int
+	ParentID *uint
 	Message  string
-	AuthorID int
+	AuthorID uint
 	Author   UserEntity
 	Users    []UserEntity `gorm:"many2many:tuit_likes;"`
-	Likes    int
+	Likes    uint
 }
 
 func NewTuitRepository(creator *gorm.DB, logger logging.ContextualLogger) *PostRepository {
@@ -133,17 +133,17 @@ func (r *PostRepository) RemoveLike(ctx context.Context, userID int, tuitID int)
 
 	selectedTuit.Likes--
 
-	return r.database.Transaction(func(tx *gorm.DB) error {
+	txResultErr := r.database.Transaction(func(transaction *gorm.DB) error {
 		entity := NewTuitFromModel(selectedTuit)
 
-		err = tx.Save(entity).Error
+		err = transaction.Save(entity).Error
 		if err != nil {
 			r.logger.Printf(ctx, "syserror from database when adding like %v", err)
 
 			return fmt.Errorf("syserror from database when adding like %w", err)
 		}
 
-		err = tx.Exec(`
+		err = transaction.Exec(`
 		DELETE FROM tuit_likes WHERE (tuit_likes.tuit_entity_id = ? AND tuit_likes.user_entity_id = ?)
 		`, tuitID, userID).Error
 		if err != nil {
@@ -154,11 +154,17 @@ func (r *PostRepository) RemoveLike(ctx context.Context, userID int, tuitID int)
 
 		return nil
 	})
+
+	if txResultErr != nil {
+		return fmt.Errorf("syserror from database when removing like %w", txResultErr)
+	}
+
+	return nil
 }
 
-func (r *PostRepository) FindByID(ctx context.Context, tuitId int) (*tuit.Tuit, error) {
+func (r *PostRepository) FindByID(ctx context.Context, tuitID int) (*tuit.Tuit, error) {
 	res := &TuitEntity{}
-	txResult := r.database.Preload("Author").First(res, tuitId)
+	txResult := r.database.Preload("Author").First(res, tuitID)
 
 	if txResult.Error != nil {
 		r.logger.Printf(ctx, "syserror from database when finding tuit by id %v", txResult.Error)

@@ -52,7 +52,7 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	token, ok := request.Context().Value("token").(*jwt.Token)
+	token, ok := request.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
 		_ = render.Render(writer, request, ErrInvalidRequest(errors.New("unauthorized")))
@@ -101,7 +101,7 @@ func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	token, ok := request.Context().Value("token").(*jwt.Token)
+	token, ok := request.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
 		_ = render.Render(writer, request, ErrInvalidRequest(errors.New("unauthorized")))
