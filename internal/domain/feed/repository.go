@@ -5,6 +5,6 @@ import (
 )
 
 type Repository interface {
-	ListByPage(ctx context.Context, userID int, page int) ([]*Feed, error)
-	GetByID(ctx context.Context, userID int, postID int) (*Feed, error)
+	ListByPage(ctx context.Context, userID uint, page int) ([]*Feed, error)
+	GetByID(ctx context.Context, userID uint, postID int) (*Feed, error)
 }

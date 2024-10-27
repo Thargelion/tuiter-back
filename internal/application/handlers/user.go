@@ -135,7 +135,7 @@ func (u *User) MeUser(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	userId, err := u.userExtractor.ExtractUserId(token)
-	userFound, err := u.useCases.FindUserByID(request.Context(), strconv.Itoa(userId))
+	userFound, err := u.useCases.FindUserByID(request.Context(), strconv.FormatInt(int64(userId), 10))
 
 	if err != nil {
 		err := render.Render(writer, request, u.errorRenderer.RenderError(err))

@@ -70,9 +70,9 @@ func (l *UserTuitHandler) Search(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	userID := int(claims["sub"].(float64))
+	userID := uint(claims["sub"].(float64))
 
-	userPosts, err := l.useCases.Paginate(request.Context(), page, userID)
+	userPosts, err := l.useCases.Paginate(request.Context(), userID, page)
 
 	if err != nil {
 		_ = render.Render(writer, request, ErrInvalidRequest(err))

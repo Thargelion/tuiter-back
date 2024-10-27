@@ -59,12 +59,12 @@ func (j *JWTHandler) ExtractClaims(token *jwt.Token) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func (j *JWTHandler) ExtractUserId(token *jwt.Token) (int, error) {
+func (j *JWTHandler) ExtractUserId(token *jwt.Token) (uint, error) {
 	claims, err := j.ExtractClaims(token)
 
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", "invalid claims", syserror.ErrInternal)
 	}
 
-	return int(claims["sub"].(float64)), nil
+	return uint(claims["sub"].(float64)), nil
 }

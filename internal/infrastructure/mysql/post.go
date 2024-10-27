@@ -84,7 +84,7 @@ func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.T
 	return res, nil
 }
 
-func (r *PostRepository) AddLike(ctx context.Context, userID int, tuitID int) error {
+func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) error {
 	selectedTuit, err := r.FindByID(ctx, tuitID)
 	if err != nil {
 		r.logger.Printf(ctx, "tuit not found when adding like %v", err)
@@ -123,7 +123,7 @@ func (r *PostRepository) AddLike(ctx context.Context, userID int, tuitID int) er
 	return mainTx.Commit().Error
 }
 
-func (r *PostRepository) RemoveLike(ctx context.Context, userID int, tuitID int) error {
+func (r *PostRepository) RemoveLike(ctx context.Context, userID uint, tuitID int) error {
 	selectedTuit, err := r.FindByID(ctx, tuitID)
 	if err != nil {
 		r.logger.Printf(ctx, "tuit not found when adding like %v", err)
