@@ -55,12 +55,11 @@ func newTuitPayload(post *tuit.Tuit) *tuitPayload {
 }
 
 type createTuitPayload struct {
-	AuthorID uint   `json:"author_id"`
-	Message  string `json:"message"`
+	Message string `json:"message"`
 }
 
 func (c createTuitPayload) Bind(_ *http.Request) error {
-	if c.AuthorID == 0 || c.Message == "" {
+	if c.Message == "" {
 		return errInvalidRequest
 	}
 
@@ -144,7 +143,7 @@ func (t *TuitHandler) CreateTuit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newTuit := payload.toModel()
-	newTuit.Author.ID = uint(userId)
+	newTuit.Author.ID = userId
 
 	err = t.repo.Create(r.Context(), newTuit)
 

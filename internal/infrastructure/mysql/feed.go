@@ -34,7 +34,7 @@ type FeedRepository struct {
 	logger   logging.ContextualLogger
 }
 
-func (u FeedRepository) GetByID(ctx context.Context, userID int, postID int) (*feed.Feed, error) {
+func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*feed.Feed, error) {
 	var res *feed.Feed
 	txResult := u.dbEngine.Raw(
 		projectedPostByIDQuery+";",
@@ -50,7 +50,7 @@ func (u FeedRepository) GetByID(ctx context.Context, userID int, postID int) (*f
 	return res, txResult.Error
 }
 
-func (u FeedRepository) ListByPage(ctx context.Context, userID int, page int) ([]*feed.Feed, error) {
+func (u FeedRepository) ListByPage(ctx context.Context, userID uint, page int) ([]*feed.Feed, error) {
 	var res []*feed.Feed
 
 	if page <= 0 {
@@ -69,7 +69,7 @@ func (u FeedRepository) ListByPage(ctx context.Context, userID int, page int) ([
 	return res, nil
 }
 
-func (u FeedRepository) selectFeed(userID int, offset int) *gorm.DB {
+func (u FeedRepository) selectFeed(userID uint, offset int) *gorm.DB {
 	return u.dbEngine.Raw(
 		paginatedQuery(projectedPostPartialQuery),
 		userID,

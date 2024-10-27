@@ -20,8 +20,8 @@ type UserPostService struct {
 	userPostRepository feed.Repository
 }
 
-func (u *UserPostService) Paginate(ctx context.Context, userID int, page int) ([]*feed.Feed, error) {
-	userTuitPage, err := u.userPostRepository.ListByPage(ctx, page, userID)
+func (u *UserPostService) Paginate(ctx context.Context, userID uint, page int) ([]*feed.Feed, error) {
+	userTuitPage, err := u.userPostRepository.ListByPage(ctx, userID, page)
 
 	if err != nil {
 		return nil, fmt.Errorf("error paginating user posts: %w", err)
@@ -30,7 +30,7 @@ func (u *UserPostService) Paginate(ctx context.Context, userID int, page int) ([
 	return userTuitPage, nil
 }
 
-func (u *UserPostService) AddLike(ctx context.Context, userID int, tuitID int) (*feed.Feed, error) {
+func (u *UserPostService) AddLike(ctx context.Context, userID uint, tuitID int) (*feed.Feed, error) {
 	err := u.tuitRepository.AddLike(ctx, userID, tuitID)
 
 	if err != nil {
@@ -46,7 +46,7 @@ func (u *UserPostService) AddLike(ctx context.Context, userID int, tuitID int) (
 	return userTuit, nil
 }
 
-func (u *UserPostService) RemoveLike(ctx context.Context, userID int, tuitID int) (*feed.Feed, error) {
+func (u *UserPostService) RemoveLike(ctx context.Context, userID uint, tuitID int) (*feed.Feed, error) {
 	err := u.tuitRepository.RemoveLike(ctx, userID, tuitID)
 
 	if err != nil {

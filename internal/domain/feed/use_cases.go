@@ -8,15 +8,15 @@ type Liker interface {
 }
 
 type AddLike interface {
-	AddLike(ctx context.Context, userID int, tuitID int) (*Feed, error)
+	AddLike(ctx context.Context, userID uint, tuitID int) (*Feed, error)
 }
 
 type RemoveLike interface {
-	RemoveLike(ctx context.Context, userID int, tuitID int) (*Feed, error)
+	RemoveLike(ctx context.Context, userID uint, tuitID int) (*Feed, error)
 }
 
 type Pager interface {
-	Paginate(ctx context.Context, userID int, page int) ([]*Feed, error)
+	Paginate(ctx context.Context, userID uint, page int) ([]*Feed, error)
 }
 
 type UseCases interface {
