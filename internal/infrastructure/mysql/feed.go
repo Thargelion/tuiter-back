@@ -70,10 +70,9 @@ func (u FeedRepository) ListByPage(ctx context.Context, userID uint, page int) (
 }
 
 func (u FeedRepository) selectFeed(userID uint, offset int) *gorm.DB {
+	q := queryBuilder(projectedPostPartialQuery).orderBy("t.created_at desc").paginated(postsPerPage, offset)
 	return u.dbEngine.Raw(
-		paginatedQuery(projectedPostPartialQuery),
+		string(q),
 		userID,
-		postsPerPage,
-		offset,
 	)
 }
