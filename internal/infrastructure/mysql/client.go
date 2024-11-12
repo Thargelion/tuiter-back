@@ -7,8 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func paginatedQuery(query string) string {
-	return query + "LIMIT ? OFFSET ?;"
+type queryBuilder string
+
+func (q queryBuilder) orderBy(order string) queryBuilder {
+	return queryBuilder(fmt.Sprintf("%s ORDER BY %s", q, order))
+}
+
+func (q queryBuilder) paginated(limit int, offset int) queryBuilder {
+	return queryBuilder(fmt.Sprintf("%s LIMIT %d OFFSET %d;", q, limit, offset))
 }
 
 func Connect(user string, pass string, host string, db string) *gorm.DB {

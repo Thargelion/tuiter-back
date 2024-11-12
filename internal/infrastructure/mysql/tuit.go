@@ -21,6 +21,8 @@ func NewTuitFromModel(t *tuit.Tuit) *TuitEntity {
 		Tuit:     *t,
 		Message:  t.Message,
 		AuthorID: t.Author.ID,
+		Likes:    t.Likes,
+		ParentID: t.ParentID,
 	}
 }
 
@@ -85,14 +87,16 @@ func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.T
 }
 
 func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) error {
-	selectedTuit, err := r.FindByID(ctx, tuitID)
+	var entity TuitEntity
+	err := r.database.First(&entity, tuitID).Error
+
 	if err != nil {
 		r.logger.Printf(ctx, "tuit not found when adding like %v", err)
 
 		return fmt.Errorf("tuit not found when adding like %w", err)
 	}
 
-	selectedTuit.Likes++
+	entity.Likes++
 
 	mainTx := r.database.Begin()
 
@@ -102,9 +106,8 @@ func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) e
 		}
 	}()
 
-	entity := NewTuitFromModel(selectedTuit)
-
 	err = mainTx.Save(entity).Error
+
 	if err != nil {
 		mainTx.Rollback()
 		r.logger.Printf(ctx, "syserror from database when adding like %v", err)
@@ -124,18 +127,17 @@ func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) e
 }
 
 func (r *PostRepository) RemoveLike(ctx context.Context, userID uint, tuitID int) error {
-	selectedTuit, err := r.FindByID(ctx, tuitID)
+	var entity TuitEntity
+	err := r.database.First(&entity, tuitID).Error
 	if err != nil {
 		r.logger.Printf(ctx, "tuit not found when adding like %v", err)
 
 		return fmt.Errorf("tuit not found when adding like %w", err)
 	}
 
-	selectedTuit.Likes--
+	entity.Likes--
 
 	txResultErr := r.database.Transaction(func(transaction *gorm.DB) error {
-		entity := NewTuitFromModel(selectedTuit)
-
 		err = transaction.Save(entity).Error
 		if err != nil {
 			r.logger.Printf(ctx, "syserror from database when adding like %v", err)
