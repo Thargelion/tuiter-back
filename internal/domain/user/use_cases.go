@@ -7,7 +7,12 @@ import (
 type UseCases interface {
 	SearchUserUseCase
 	FindUserUseCase
+	EditUserUseCase
 	CreateAndLogin(ctx context.Context, user *User) (*Logged, error)
+}
+
+type EditUserUseCase interface {
+	Update(ctx context.Context, user *User) (*User, error)
 }
 
 type SearchUserUseCase interface {
