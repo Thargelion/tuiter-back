@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"tuiter.com/api/internal/domain/avatar"
 	"tuiter.com/api/internal/domain/user"
@@ -45,6 +46,28 @@ func (c *Service) create(ctx context.Context, user *user.User) (*user.User, erro
 	}
 
 	return newUser, nil
+}
+
+func (c *Service) Update(ctx context.Context, u *user.User) (*user.User, error) {
+	oldUser, err := c.userRepo.FindUserByID(ctx, strconv.Itoa(int(u.ID)))
+	if err != nil {
+		return nil, fmt.Errorf("syserror searching for a user on repository: %w", err)
+	}
+
+	if u.Password == "" {
+		// Business Rule: Password is not required for update
+		u.Password = oldUser.Password
+	}
+
+	// Business Rule: User can't change email
+	u.Email = oldUser.Email
+	updatedUser, err := c.userRepo.Update(ctx, u)
+
+	if err != nil {
+		return nil, fmt.Errorf("syserror updating a user on repository: %w", err)
+	}
+
+	return updatedUser, nil
 }
 
 func (c *Service) CreateAndLogin(ctx context.Context, u *user.User) (*user.Logged, error) {

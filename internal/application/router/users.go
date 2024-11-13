@@ -9,6 +9,7 @@ import (
 
 type profileHandler interface {
 	MeUser(writer http.ResponseWriter, request *http.Request)
+	UpdateProfile(w http.ResponseWriter, r *http.Request)
 }
 
 type userHandler interface {
@@ -31,6 +32,7 @@ func NewUserRouter(userPostHandler userPostHandler, profileHandler profileHandle
 func (ur *UserRouter) Route(router chi.Router) {
 	router.With(handlers.Pagination).Get("/feed", ur.userPost.Search)
 	router.Get("/profile", ur.profileHandler.MeUser)
+	router.Put("/profile", ur.profileHandler.UpdateProfile)
 }
 
 type UserRouter struct {
