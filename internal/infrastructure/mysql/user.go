@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 	"tuiter.com/api/internal/domain/user"
@@ -30,6 +31,16 @@ type UserEntity struct {
 
 func NewUserRepository(creator *gorm.DB, logger logging.ContextualLogger) *UserRepository {
 	return &UserRepository{database: creator, logger: logger}
+}
+
+func NewEntityFromModel(u user.User) *UserEntity {
+	return &UserEntity{
+		User:  u,
+		Email: u.Email,
+		Model: gorm.Model{
+			ID: u.ID,
+		},
+	}
 }
 
 type UserRepository struct {
@@ -80,6 +91,29 @@ func (r *UserRepository) Create(ctx context.Context, user *user.User) (*user.Use
 	}
 
 	return user, nil
+}
+
+func (r *UserRepository) Update(ctx context.Context, user *user.User) (*user.User, error) {
+	userEntity := NewEntityFromModel(*user)
+	old := &UserEntity{}
+	r.database.First(old, "id = ?", user.ID)
+	if old.CreatedAt.IsZero() {
+		userEntity.CreatedAt = time.Now()
+		userEntity.UpdatedAt = time.Now()
+	} else {
+		userEntity.CreatedAt = old.CreatedAt
+		userEntity.UpdatedAt = time.Now()
+	}
+	txResult := r.database.Save(userEntity)
+
+	if txResult.Error != nil {
+		r.logger.Printf(ctx, "syserror updating user on database %v", txResult.Error)
+
+		return nil, fmt.Errorf("syserror updating user on database %w", txResult.Error)
+	}
+
+	return user, nil
+
 }
 
 func (r *UserRepository) FindByEmail(
