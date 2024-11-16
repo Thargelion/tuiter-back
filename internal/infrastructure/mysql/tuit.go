@@ -86,6 +86,23 @@ func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.T
 	return res, nil
 }
 
+func (r *PostRepository) ReplyListByPage(_ context.Context, parentID uint, pageID int) ([]*tuit.Tuit, error) {
+	res := make([]*tuit.Tuit, 0)
+
+	if pageID <= 0 {
+		pageID = 1
+	}
+
+	offset := (pageID - 1) * defaultPageSize
+	txResult := r.database.Limit(defaultPageSize).Offset(offset).Find(&res, "parent_id = ?", parentID)
+
+	if txResult.Error != nil {
+		return nil, fmt.Errorf("syserror from database when listing posts by page %w", txResult.Error)
+	}
+
+	return res, nil
+}
+
 func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) error {
 	var entity TuitEntity
 	err := r.database.First(&entity, tuitID).Error
@@ -129,6 +146,7 @@ func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) e
 func (r *PostRepository) RemoveLike(ctx context.Context, userID uint, tuitID int) error {
 	var entity TuitEntity
 	err := r.database.First(&entity, tuitID).Error
+
 	if err != nil {
 		r.logger.Printf(ctx, "tuit not found when adding like %v", err)
 

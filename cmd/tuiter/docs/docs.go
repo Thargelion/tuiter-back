@@ -114,7 +114,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/feed.Feed"
+                                "$ref": "#/definitions/feed.TuitPost"
                             }
                         }
                     }
@@ -224,7 +224,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "feed.Feed": {
+        "feed.TuitPost": {
             "type": "object",
             "properties": {
                 "author": {
