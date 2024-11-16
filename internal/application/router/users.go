@@ -20,6 +20,7 @@ type userHandler interface {
 
 type userPostHandler interface {
 	Search(writer http.ResponseWriter, request *http.Request)
+	SearchReplies(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewUserRouter(userPostHandler userPostHandler, profileHandler profileHandler) *UserRouter {
@@ -31,6 +32,7 @@ func NewUserRouter(userPostHandler userPostHandler, profileHandler profileHandle
 
 func (ur *UserRouter) Route(router chi.Router) {
 	router.With(handlers.Pagination).Get("/feed", ur.userPost.Search)
+	router.With(handlers.Pagination).Get("/feed/{tuitID}/replies", ur.userPost.SearchReplies)
 	router.Get("/profile", ur.profileHandler.MeUser)
 	router.Put("/profile", ur.profileHandler.UpdateProfile)
 }

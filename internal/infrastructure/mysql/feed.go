@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
-	"tuiter.com/api/internal/domain/feed"
+	"tuiter.com/api/internal/domain/tuitpost"
 	"tuiter.com/api/pkg/logging"
+	"tuiter.com/api/pkg/query"
 )
 
 const (
@@ -34,8 +35,8 @@ type FeedRepository struct {
 	logger   logging.ContextualLogger
 }
 
-func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*feed.Feed, error) {
-	var res *feed.Feed
+func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*tuitpost.TuitPost, error) {
+	var res *tuitpost.TuitPost
 	txResult := u.dbEngine.Raw(
 		projectedPostByIDQuery+";",
 		userID,
@@ -50,15 +51,25 @@ func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*
 	return res, txResult.Error
 }
 
-func (u FeedRepository) ListByPage(ctx context.Context, userID uint, page int) ([]*feed.Feed, error) {
-	var res []*feed.Feed
+func (u FeedRepository) RepliesByPage(ctx context.Context, userID uint, parentID uint, page int) ([]*tuitpost.TuitPost, error) {
+	var res []*tuitpost.TuitPost
 
 	if page <= 0 {
 		page = 1
 	}
 
 	offset := (page - 1) * postsPerPage
-	txResult := u.selectFeed(userID, offset).Scan(&res)
+	q := query.Builder(
+		projectedPostPartialQuery,
+	).Where(
+		"t.parent_id = ?",
+	).OrderBy(
+		"t.created_at desc",
+	).Paginated(
+		postsPerPage, offset,
+	)
+
+	txResult := u.dbEngine.Raw(q.String(), userID, parentID).Scan(&res)
 
 	if txResult.Error != nil {
 		u.logger.Printf(ctx, "syserror from database when listing posts by page %v", txResult.Error)
@@ -69,10 +80,40 @@ func (u FeedRepository) ListByPage(ctx context.Context, userID uint, page int) (
 	return res, nil
 }
 
-func (u FeedRepository) selectFeed(userID uint, offset int) *gorm.DB {
-	q := queryBuilder(projectedPostPartialQuery).orderBy("t.created_at desc").paginated(postsPerPage, offset)
-	return u.dbEngine.Raw(
+func (u FeedRepository) SearchByPage(ctx context.Context, userID uint, page int, params query.Params) ([]*tuitpost.TuitPost, error) {
+	var res []*tuitpost.TuitPost
+
+	if page <= 0 {
+		page = 1
+	}
+
+	onlyParents := params.Contains("only_parents")
+
+	offset := (page - 1) * postsPerPage
+	q := query.Builder(
+		projectedPostPartialQuery,
+	)
+	if onlyParents {
+		q = q.Where(
+			"t.parent_id IS NULL",
+		)
+	}
+	q = q.OrderBy(
+		"t.created_at desc",
+	).Paginated(
+		postsPerPage,
+		offset,
+	)
+	txResult := u.dbEngine.Raw(
 		string(q),
 		userID,
-	)
+	).Scan(&res)
+
+	if txResult.Error != nil {
+		u.logger.Printf(ctx, "syserror from database when listing posts by page %v", txResult.Error)
+
+		return nil, fmt.Errorf("syserror from database when listing posts by page %w", txResult.Error)
+	}
+
+	return res, nil
 }
