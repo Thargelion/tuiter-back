@@ -13,7 +13,7 @@ require (
 	github.com/swaggo/http-swagger/v2 v2.0.2
 	github.com/swaggo/swag v1.16.3
 	golang.org/x/crypto v0.31.0
-	golang.org/x/net v0.29.0
+	golang.org/x/net v0.33.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.11
 )
