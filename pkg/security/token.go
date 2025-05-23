@@ -15,5 +15,5 @@ type TokenClaimsExtractor interface {
 }
 
 type UserExtractor interface {
-	ExtractUserId(token *jwt.Token) (int, error)
+	ExtractUserId(token *jwt.Token) (uint, error)
 }

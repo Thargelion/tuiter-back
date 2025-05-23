@@ -10,6 +10,7 @@ import (
 )
 
 var errUnknown = errors.New("unknown error")
+var errTokenNotFound = errors.New("token not found")
 
 type LogWriter struct {
 	http.ResponseWriter

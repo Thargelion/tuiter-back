@@ -1,8 +1,8 @@
-package feed
+package tuitpost
 
-// Feed represents the posts relative to a user.
-// Feed will calculate if the user liked the tuit.
-type Feed struct {
+// TuitPost represents the posts relative to a user.
+// TuitPost will calculate if the user liked the tuit.
+type TuitPost struct {
 	ID        int    `json:"id"`
 	Message   string `json:"message"`
 	ParentID  int    `json:"parent_id"`

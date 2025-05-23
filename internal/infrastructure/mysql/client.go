@@ -7,10 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func paginatedQuery(query string) string {
-	return query + "LIMIT ? OFFSET ?;"
-}
-
 func Connect(user string, pass string, host string, db string) *gorm.DB {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", user, pass, host, db)
 	database, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})

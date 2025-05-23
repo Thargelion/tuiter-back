@@ -8,13 +8,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
-	"tuiter.com/api/internal/domain/feed"
+	"tuiter.com/api/internal/domain/tuitpost"
 	"tuiter.com/api/pkg/logging"
 	"tuiter.com/api/pkg/security"
 )
 
 func NewLikeHandler(
-	liker feed.Liker,
+	liker tuitpost.Liker,
 	userExtractor security.UserExtractor,
 	errorRenderer ErrorRenderer,
 	logger logging.ContextualLogger,
@@ -31,7 +31,7 @@ type LikeHandler struct {
 	errorRenderer ErrorRenderer
 	userExtractor security.UserExtractor
 	logger        logging.ContextualLogger
-	liker         feed.Liker
+	liker         tuitpost.Liker
 }
 
 // AddLike godoc
@@ -52,7 +52,7 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	token, ok := request.Context().Value("token").(*jwt.Token)
+	token, ok := request.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
 		_ = render.Render(writer, request, ErrInvalidRequest(errors.New("unauthorized")))
@@ -101,7 +101,7 @@ func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	token, ok := request.Context().Value("token").(*jwt.Token)
+	token, ok := request.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
 		_ = render.Render(writer, request, ErrInvalidRequest(errors.New("unauthorized")))
