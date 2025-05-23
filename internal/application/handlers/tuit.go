@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
 	"tuiter.com/api/internal/domain/tuit"
@@ -35,10 +36,10 @@ type TuitHandler struct {
 
 type tuitPayload struct {
 	commonPayload
-	ParentID *int         `json:"parent_id"`
+	ParentID *uint        `json:"parent_id"`
 	Message  string       `json:"message"`
 	Author   *userPayload `json:"author"`
-	Likes    int          `json:"likes"`
+	Likes    uint         `json:"likes"`
 }
 
 func newTuitPayload(post *tuit.Tuit) *tuitPayload {
@@ -55,12 +56,11 @@ func newTuitPayload(post *tuit.Tuit) *tuitPayload {
 }
 
 type createTuitPayload struct {
-	AuthorID uint   `json:"author_id"`
-	Message  string `json:"message"`
+	Message string `json:"message"`
 }
 
 func (c createTuitPayload) Bind(_ *http.Request) error {
-	if c.AuthorID == 0 || c.Message == "" {
+	if c.Message == "" {
 		return errInvalidRequest
 	}
 
@@ -131,20 +131,76 @@ func (t *TuitHandler) CreateTuit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, ok := r.Context().Value("token").(*jwt.Token)
+	token, ok := r.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
-		_ = render.Render(w, r, ErrInvalidRequest(errors.New("token not found")))
+		_ = render.Render(w, r, ErrInvalidRequest(errTokenNotFound))
 	}
 
-	userId, err := t.userExtractor.ExtractUserId(token)
+	userID, err := t.userExtractor.ExtractUserId(token)
 	if err != nil {
 		_ = render.Render(w, r, ErrInvalidRequest(err))
+
 		return
 	}
 
 	newTuit := payload.toModel()
-	newTuit.Author.ID = uint(userId)
+	newTuit.Author.ID = userID
+
+	err = t.repo.Create(r.Context(), newTuit)
+
+	if err != nil {
+		err := render.Render(w, r, ErrInvalidRequest(err))
+
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	err = render.Render(w, r, newResponse(http.StatusCreated, "Tuit created"))
+	if err != nil {
+		return
+	}
+}
+
+func (t *TuitHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
+	tuitID, err := strconv.Atoi(chi.URLParam(r, "tuitID"))
+	utuitID := uint(tuitID)
+
+	if err != nil {
+		_ = render.Render(w, r, ErrInvalidRequest(err))
+
+		return
+	}
+
+	payload := &createTuitPayload{}
+	if err := render.Bind(r, payload); err != nil {
+		err := render.Render(w, r, ErrInvalidRequest(err))
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	token, ok := r.Context().Value(security.TokenMan).(*jwt.Token)
+
+	if !ok {
+		_ = render.Render(w, r, ErrInvalidRequest(errTokenNotFound))
+	}
+
+	userID, err := t.userExtractor.ExtractUserId(token)
+	if err != nil {
+		_ = render.Render(w, r, ErrInvalidRequest(err))
+
+		return
+	}
+
+	newTuit := payload.toModel()
+	newTuit.Author.ID = userID
+	newTuit.ParentID = &utuitID
 
 	err = t.repo.Create(r.Context(), newTuit)
 
