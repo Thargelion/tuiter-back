@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -8,6 +10,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
 	"tuiter.com/api/internal/domain/tuit"
+	"tuiter.com/api/internal/domain/tuitfeed"
 	"tuiter.com/api/internal/domain/user"
 	"tuiter.com/api/pkg/logging"
 	"tuiter.com/api/pkg/security"
@@ -15,12 +18,14 @@ import (
 
 func NewTuitHandler(
 	repository tuit.Repository,
+	tuitFeedRepo tuitfeed.Repository,
 	userExtractor security.UserExtractor,
 	errRenderer ErrorRenderer,
 	logger logging.ContextualLogger,
 ) *TuitHandler {
 	return &TuitHandler{
 		repo:          repository,
+		tuitFeedRepo:  tuitFeedRepo,
 		userExtractor: userExtractor,
 		errorRenderer: errRenderer,
 		logger:        logger,
@@ -29,6 +34,7 @@ func NewTuitHandler(
 
 type TuitHandler struct {
 	repo          tuit.Repository
+	tuitFeedRepo  tuitfeed.Repository
 	userExtractor security.UserExtractor
 	errorRenderer ErrorRenderer
 	logger        logging.ContextualLogger
@@ -90,6 +96,34 @@ func newPostList(posts []*tuit.Tuit) []render.Renderer {
 	}
 
 	return list
+}
+
+type tuitFeedPayload struct {
+	ID        int    `json:"id"`
+	Message   string `json:"message"`
+	ParentID  int    `json:"parent_id"`
+	Author    string `json:"author"`
+	AvatarURL string `json:"avatar_url"`
+	Likes     int    `json:"likes"`
+	Liked     bool   `json:"liked"`
+	Date      string `json:"date"`
+}
+
+func newTuitFeedPayload(model *tuitfeed.Model) *tuitFeedPayload {
+	return &tuitFeedPayload{
+		ID:        model.ID,
+		Message:   model.Message,
+		ParentID:  model.ParentID,
+		Author:    model.Author,
+		AvatarURL: model.AvatarURL,
+		Likes:     model.Likes,
+		Liked:     model.Liked,
+		Date:      model.Date,
+	}
+}
+
+func (t *tuitFeedPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
+	return nil
 }
 
 // Search returns all the tuits from a page.
@@ -215,6 +249,72 @@ func (t *TuitHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = render.Render(w, r, newResponse(http.StatusCreated, "Tuit created"))
+	if err != nil {
+		return
+	}
+}
+
+// GetTuitByID retrieves a specific tuit by its ID.
+// @Summary Get tuit by ID
+// @Description Get a tuit by its ID
+// @Tags tuits
+// @Accept json
+// @Produce json
+// @Param tuitID path int true "Tuit ID"
+// @Success 200 {object} tuitFeedPayload
+// @Router /tuits/{tuitID} [get]
+func (t *TuitHandler) GetTuitByID(w http.ResponseWriter, r *http.Request) {
+	// Extract tuitID from URL parameters
+	tuitID, err := strconv.Atoi(chi.URLParam(r, "tuitID"))
+	if err != nil {
+		err := render.Render(w, r, ErrInvalidRequest(err))
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	// Extract user ID from token
+	token, ok := r.Context().Value(security.TokenMan).(*jwt.Token)
+	if !ok {
+		_ = render.Render(w, r, ErrInvalidRequest(errTokenNotFound))
+
+		return
+	}
+
+	userID, err := t.userExtractor.ExtractUserId(token)
+	if err != nil {
+		_ = render.Render(w, r, ErrInvalidRequest(err))
+		
+		return
+	}
+
+	// Get tuit from repository
+	tf, err := t.tuitFeedRepo.GetByID(r.Context(), userID, tuitID)
+	if err != nil {
+		t.logger.Printf(r.Context(), "error getting tuit #%d by ID: %v", tuitID, err)
+		err := render.Render(w, r, ErrInvalidRequest(err))
+
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	// Check if tuit was found
+	if tf == nil {
+		err := render.Render(w, r, ErrNotFound(errors.New(fmt.Sprintf("tuit with id %d not found", tuitID))))
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	// Return the tuit
+	err = render.Render(w, r, newTuitFeedPayload(tf))
 	if err != nil {
 		return
 	}

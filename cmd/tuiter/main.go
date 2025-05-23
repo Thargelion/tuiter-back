@@ -102,11 +102,11 @@ func main() {
 	// Repositories
 	userRepo := mysql.NewUserRepository(dataBase, logger)
 	tuitRepo := mysql.NewTuitRepository(dataBase, logger)
-	userPostRepo := mysql.NewFeedRepository(dataBase, logger)
+	tuitFeedRepository := mysql.NewTuitFeedRepository(dataBase, logger)
 
 	// Services
 	avatarUseCases := avatar.NewAvatarUseCases()
-	userPostUseCases := services.NewUserPostService(tuitRepo, userPostRepo)
+	userTuitUseCases := services.NewuserTuitService(tuitRepo, tuitFeedRepository)
 	authenticator := services.NewUserAuthenticator(userRepo, tokenValidator)
 	userService := services.NewUserService(userRepo, tokenValidator, avatarUseCases)
 
@@ -117,12 +117,12 @@ func main() {
 	// Handlers
 	loginHandler := handlers.NewLogin(authenticator, errHandler)
 	userHandler := handlers.NewUserHandler(userService, tokenValidator, errHandler, logger)
-	userPostHandler := handlers.NewUserTuitHandler(userPostUseCases, tokenValidator, errHandler, logger)
-	tuitHandler := handlers.NewTuitHandler(tuitRepo, tokenValidator, errHandler, logger)
-	likeHandler := handlers.NewLikeHandler(userPostUseCases, tokenValidator, errHandler, logger)
+	userTuitHandler := handlers.NewUserTuitHandler(userTuitUseCases, tokenValidator, errHandler, logger)
+	tuitHandler := handlers.NewTuitHandler(tuitRepo, tuitFeedRepository, tokenValidator, errHandler, logger)
+	likeHandler := handlers.NewLikeHandler(userTuitUseCases, tokenValidator, errHandler, logger)
 
 	// Routers
-	userRouter := router.NewUserRouter(userPostHandler, userHandler)
+	userRouter := router.NewUserRouter(userTuitHandler, userHandler)
 	publicUserRouter := router.NewPublicUserRouter(userHandler)
 	tuitRouter := router.NewTuitRouter(tuitHandler)
 	loginRouter := router.NewLoginRouter(loginHandler)

@@ -8,13 +8,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
-	"tuiter.com/api/internal/domain/tuitpost"
+	"tuiter.com/api/internal/domain/tuitfeed"
 	"tuiter.com/api/pkg/logging"
 	"tuiter.com/api/pkg/security"
 )
 
 func NewLikeHandler(
-	liker tuitpost.Liker,
+	liker tuitfeed.Liker,
 	userExtractor security.UserExtractor,
 	errorRenderer ErrorRenderer,
 	logger logging.ContextualLogger,
@@ -31,7 +31,7 @@ type LikeHandler struct {
 	errorRenderer ErrorRenderer
 	userExtractor security.UserExtractor
 	logger        logging.ContextualLogger
-	liker         tuitpost.Liker
+	liker         tuitfeed.Liker
 }
 
 // AddLike godoc
@@ -41,7 +41,7 @@ type LikeHandler struct {
 // @Accept json
 // @Produce json
 // @Param like body like true "Like"
-// @Success 200 {object} userPostPayload
+// @Success 200 {object} userTuitPayload
 // @Router /me/tuits/{id}/likes [post].
 func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request) {
 	tuitID, err := strconv.Atoi(chi.URLParam(request, "id"))
@@ -76,7 +76,7 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	err = render.Render(writer, request, &userPostPayload{userTuit})
+	err = render.Render(writer, request, &userTuitPayload{userTuit})
 
 	if err != nil {
 		l.logger.Printf(request.Context(), "syserror rendering response: %v", err)
@@ -90,7 +90,7 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 // @Accept json
 // @Produce json
 // @Param like body like true "Like"
-// @Success 200 {object} userPostPayload
+// @Success 200 {object} userTuitPayload
 // @Router /me/tuits/{id}/likes [delete].
 func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Request) {
 	tuitID, err := strconv.Atoi(chi.URLParam(request, "id"))
@@ -130,5 +130,5 @@ func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	_ = render.Render(writer, request, &userPostPayload{userTuit})
+	_ = render.Render(writer, request, &userTuitPayload{userTuit})
 }

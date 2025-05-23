@@ -11,6 +11,7 @@ type tuitHandler interface {
 	Search(w http.ResponseWriter, r *http.Request)
 	CreateTuit(w http.ResponseWriter, r *http.Request)
 	CreateReply(w http.ResponseWriter, r *http.Request)
+	GetTuitByID(w http.ResponseWriter, r *http.Request)
 }
 
 func NewTuitRouter(tuitHandler tuitHandler) *TuitRouter {
@@ -21,8 +22,10 @@ type TuitRouter struct {
 	tuitHandler tuitHandler
 }
 
+// Route sets up the routes for the Tuit resource.
 func (tr *TuitRouter) Route(r chi.Router) {
 	r.With(handlers.Pagination).Get("/", tr.tuitHandler.Search)
 	r.Post("/", tr.tuitHandler.CreateTuit)
 	r.Post("/{tuitID}/replies", tr.tuitHandler.CreateReply)
+	r.Get("/{tuitID}", tr.tuitHandler.GetTuitByID)
 }

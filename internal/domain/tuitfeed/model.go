@@ -1,8 +1,8 @@
-package tuitpost
+package tuitfeed
 
-// TuitPost represents the posts relative to a user.
-// TuitPost will calculate if the user liked the tuit.
-type TuitPost struct {
+// Model represents the posts relative to a user.
+// Model will calculate if the user liked the tuit.
+type Model struct {
 	ID        int    `json:"id"`
 	Message   string `json:"message"`
 	ParentID  int    `json:"parent_id"`

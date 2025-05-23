@@ -7,14 +7,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
-	"tuiter.com/api/internal/domain/tuitpost"
+	"tuiter.com/api/internal/domain/tuitfeed"
 	"tuiter.com/api/pkg/logging"
 	"tuiter.com/api/pkg/query"
 	"tuiter.com/api/pkg/security"
 )
 
 func NewUserTuitHandler(
-	useCases tuitpost.UseCases,
+	useCases tuitfeed.UseCases,
 	claimsExtractor security.TokenClaimsExtractor,
 	errRenderer ErrorRenderer,
 	logger logging.ContextualLogger,
@@ -28,7 +28,7 @@ func NewUserTuitHandler(
 }
 
 type UserTuitHandler struct {
-	useCases        tuitpost.UseCases
+	useCases        tuitfeed.UseCases
 	claimsExtractor security.TokenClaimsExtractor
 	errorRenderer   ErrorRenderer
 	logger          logging.ContextualLogger
@@ -42,7 +42,7 @@ type UserTuitHandler struct {
 // @Param page query int false "Page"
 // @Param id path int true "User ID"
 // @Produce json
-// @Success 200 {array} tuitpost.TuitPost
+// @Success 200 {array} tuitfeed.tuitfeed
 // @Router /me/feed [get].
 func (l *UserTuitHandler) Search(w http.ResponseWriter, r *http.Request) {
 	test := r.URL.Query().Get("page")
@@ -74,13 +74,13 @@ func (l *UserTuitHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 	userID := uint(claims["sub"].(float64))
 
-	userPosts, err := l.useCases.Paginate(r.Context(), userID, page, query.FromURLQuery(r.URL.Query()))
+	userTuits, err := l.useCases.Paginate(r.Context(), userID, page, query.FromURLQuery(r.URL.Query()))
 
 	if err != nil {
 		_ = render.Render(w, r, ErrInvalidRequest(err))
 	}
 
-	_ = render.RenderList(w, r, newUserPostList(userPosts))
+	_ = render.RenderList(w, r, newuserTuitList(userTuits))
 }
 
 // SearchReplies Tuits From User godoc
@@ -91,7 +91,7 @@ func (l *UserTuitHandler) Search(w http.ResponseWriter, r *http.Request) {
 // @Param page query int false "Page"
 // @Param id path int true "User ID"
 // @Produce json
-// @Success 200 {array} tuitpost.TuitPost
+// @Success 200 {array} tuitfeed.tuitfeed
 // @Router /me/tuits/{tuitID}/replies [get].
 func (l *UserTuitHandler) SearchReplies(writer http.ResponseWriter, request *http.Request) {
 	tuitID, err := strconv.Atoi(chi.URLParam(request, "tuitID"))
@@ -129,38 +129,38 @@ func (l *UserTuitHandler) SearchReplies(writer http.ResponseWriter, request *htt
 
 	userID := uint(claims["sub"].(float64))
 
-	userPosts, err := l.useCases.PaginateReplies(request.Context(), userID, uTuitID, page)
+	userTuits, err := l.useCases.PaginateReplies(request.Context(), userID, uTuitID, page)
 
 	if err != nil {
 		_ = render.Render(writer, request, ErrInvalidRequest(err))
 	}
 
-	_ = render.RenderList(writer, request, newUserPostList(userPosts))
+	_ = render.RenderList(writer, request, newuserTuitList(userTuits))
 }
 
-type userPostPayload struct {
-	*tuitpost.TuitPost
+type userTuitPayload struct {
+	*tuitfeed.Model
 }
 
-func (u *userPostPayload) Bind(_ *http.Request) error {
-	if u.TuitPost == nil {
+func (u *userTuitPayload) Bind(_ *http.Request) error {
+	if u.Model == nil {
 		return errInvalidRequest
 	}
 
 	return nil
 }
 
-func (u *userPostPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
-	u.Liked = u.TuitPost.Liked
+func (u *userTuitPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
+	u.Liked = u.Model.Liked
 
 	return nil
 }
 
-func newUserPostList(posts []*tuitpost.TuitPost) []render.Renderer {
+func newuserTuitList(posts []*tuitfeed.Model) []render.Renderer {
 	list := []render.Renderer{}
 
-	for _, userPost := range posts {
-		list = append(list, &userPostPayload{userPost})
+	for _, userTuit := range posts {
+		list = append(list, &userTuitPayload{userTuit})
 	}
 
 	return list

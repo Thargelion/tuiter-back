@@ -45,7 +45,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.userPostPayload"
+                            "$ref": "#/definitions/handlers.userTuitPayload"
                         }
                     }
                 }
@@ -77,7 +77,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.userPostPayload"
+                            "$ref": "#/definitions/handlers.userTuitPayload"
                         }
                     }
                 }
@@ -114,7 +114,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/feed.TuitPost"
+                                "$ref": "#/definitions/feed.tuitfeed"
                             }
                         }
                     }
@@ -224,7 +224,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "feed.TuitPost": {
+        "feed.tuitfeed": {
             "type": "object",
             "properties": {
                 "author": {
@@ -352,7 +352,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.userPostPayload": {
+        "handlers.userTuitPayload": {
             "type": "object",
             "properties": {
                 "author": {

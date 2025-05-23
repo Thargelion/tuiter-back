@@ -84,7 +84,7 @@ definitions:
       name:
         type: string
     type: object
-  handlers.userPostPayload:
+  handlers.userTuitPayload:
     properties:
       author:
         type: string
@@ -128,7 +128,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.userPostPayload'
+            $ref: '#/definitions/handlers.userTuitPayload'
       summary: Remove a like from a tuit
       tags:
       - likes
@@ -149,7 +149,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.userPostPayload'
+            $ref: '#/definitions/handlers.userTuitPayload'
       summary: Add a like to a tuit
       tags:
       - likes

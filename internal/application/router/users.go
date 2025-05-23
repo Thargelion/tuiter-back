@@ -18,27 +18,27 @@ type userHandler interface {
 	CreateUser(writer http.ResponseWriter, request *http.Request)
 }
 
-type userPostHandler interface {
+type userTuitHandler interface {
 	Search(writer http.ResponseWriter, request *http.Request)
 	SearchReplies(writer http.ResponseWriter, request *http.Request)
 }
 
-func NewUserRouter(userPostHandler userPostHandler, profileHandler profileHandler) *UserRouter {
+func NewUserRouter(userTuitHandler userTuitHandler, profileHandler profileHandler) *UserRouter {
 	return &UserRouter{
-		userPost:       userPostHandler,
+		userTuit:       userTuitHandler,
 		profileHandler: profileHandler,
 	}
 }
 
 func (ur *UserRouter) Route(router chi.Router) {
-	router.With(handlers.Pagination).Get("/feed", ur.userPost.Search)
-	router.With(handlers.Pagination).Get("/feed/{tuitID}/replies", ur.userPost.SearchReplies)
+	router.With(handlers.Pagination).Get("/feed", ur.userTuit.Search)
+	router.With(handlers.Pagination).Get("/feed/{tuitID}/replies", ur.userTuit.SearchReplies)
 	router.Get("/profile", ur.profileHandler.MeUser)
 	router.Put("/profile", ur.profileHandler.UpdateProfile)
 }
 
 type UserRouter struct {
-	userPost       userPostHandler
+	userTuit       userTuitHandler
 	profileHandler profileHandler
 }
 

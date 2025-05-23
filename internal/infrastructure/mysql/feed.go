@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
-	"tuiter.com/api/internal/domain/tuitpost"
+	"tuiter.com/api/internal/domain/tuitfeed"
 	"tuiter.com/api/pkg/logging"
 	"tuiter.com/api/pkg/query"
 )
@@ -23,7 +23,7 @@ const (
 	projectedPostByIDQuery = projectedPostPartialQuery + "WHERE t.id = ?"
 )
 
-func NewFeedRepository(engine *gorm.DB, logger logging.ContextualLogger) *FeedRepository {
+func NewTuitFeedRepository(engine *gorm.DB, logger logging.ContextualLogger) *FeedRepository {
 	return &FeedRepository{
 		dbEngine: engine,
 		logger:   logger,
@@ -35,8 +35,8 @@ type FeedRepository struct {
 	logger   logging.ContextualLogger
 }
 
-func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*tuitpost.TuitPost, error) {
-	var res *tuitpost.TuitPost
+func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*tuitfeed.Model, error) {
+	var res *tuitfeed.Model
 	txResult := u.dbEngine.Raw(
 		projectedPostByIDQuery+";",
 		userID,
@@ -51,8 +51,8 @@ func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*
 	return res, txResult.Error
 }
 
-func (u FeedRepository) RepliesByPage(ctx context.Context, userID uint, parentID uint, page int) ([]*tuitpost.TuitPost, error) {
-	var res []*tuitpost.TuitPost
+func (u FeedRepository) RepliesByPage(ctx context.Context, userID uint, parentID uint, page int) ([]*tuitfeed.Model, error) {
+	var res []*tuitfeed.Model
 
 	if page <= 0 {
 		page = 1
@@ -80,8 +80,8 @@ func (u FeedRepository) RepliesByPage(ctx context.Context, userID uint, parentID
 	return res, nil
 }
 
-func (u FeedRepository) SearchByPage(ctx context.Context, userID uint, page int, params query.Params) ([]*tuitpost.TuitPost, error) {
-	var res []*tuitpost.TuitPost
+func (u FeedRepository) SearchByPage(ctx context.Context, userID uint, page int, params query.Params) ([]*tuitfeed.Model, error) {
+	var res []*tuitfeed.Model
 
 	if page <= 0 {
 		page = 1

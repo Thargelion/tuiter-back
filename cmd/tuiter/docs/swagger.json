@@ -41,7 +41,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.userPostPayload"
+                            "$ref": "#/definitions/handlers.userTuitPayload"
                         }
                     }
                 }
@@ -73,7 +73,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.userPostPayload"
+                            "$ref": "#/definitions/handlers.userTuitPayload"
                         }
                     }
                 }
@@ -348,7 +348,7 @@
                 }
             }
         },
-        "handlers.userPostPayload": {
+        "handlers.userTuitPayload": {
             "type": "object",
             "properties": {
                 "author": {

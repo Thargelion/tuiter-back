@@ -48,16 +48,16 @@ type TuitEntity struct {
 	Likes    uint
 }
 
-func NewTuitRepository(creator *gorm.DB, logger logging.ContextualLogger) *PostRepository {
-	return &PostRepository{database: creator, logger: logger}
+func NewTuitRepository(creator *gorm.DB, logger logging.ContextualLogger) *TuitFeedRepository {
+	return &TuitFeedRepository{database: creator, logger: logger}
 }
 
-type PostRepository struct {
+type TuitFeedRepository struct {
 	database *gorm.DB
 	logger   logging.ContextualLogger
 }
 
-func (r *PostRepository) Create(_ context.Context, t *tuit.Tuit) error {
+func (r *TuitFeedRepository) Create(_ context.Context, t *tuit.Tuit) error {
 	res := r.database.Create(NewTuitFromModel(t))
 
 	if res.Error != nil {
@@ -67,7 +67,7 @@ func (r *PostRepository) Create(_ context.Context, t *tuit.Tuit) error {
 	return nil
 }
 
-func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.Tuit, error) {
+func (r *TuitFeedRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.Tuit, error) {
 	res := make([]*tuit.Tuit, 0)
 
 	pageNumber, _ := strconv.Atoi(pageID)
@@ -86,7 +86,7 @@ func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.T
 	return res, nil
 }
 
-func (r *PostRepository) ReplyListByPage(_ context.Context, parentID uint, pageID int) ([]*tuit.Tuit, error) {
+func (r *TuitFeedRepository) ReplyListByPage(_ context.Context, parentID uint, pageID int) ([]*tuit.Tuit, error) {
 	res := make([]*tuit.Tuit, 0)
 
 	if pageID <= 0 {
@@ -103,7 +103,7 @@ func (r *PostRepository) ReplyListByPage(_ context.Context, parentID uint, pageI
 	return res, nil
 }
 
-func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) error {
+func (r *TuitFeedRepository) AddLike(ctx context.Context, userID uint, tuitID int) error {
 	var entity TuitEntity
 	err := r.database.First(&entity, tuitID).Error
 
@@ -143,7 +143,7 @@ func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) e
 	return mainTx.Commit().Error
 }
 
-func (r *PostRepository) RemoveLike(ctx context.Context, userID uint, tuitID int) error {
+func (r *TuitFeedRepository) RemoveLike(ctx context.Context, userID uint, tuitID int) error {
 	var entity TuitEntity
 	err := r.database.First(&entity, tuitID).Error
 
@@ -182,7 +182,7 @@ func (r *PostRepository) RemoveLike(ctx context.Context, userID uint, tuitID int
 	return nil
 }
 
-func (r *PostRepository) FindByID(ctx context.Context, tuitID int) (*tuit.Tuit, error) {
+func (r *TuitFeedRepository) FindByID(ctx context.Context, tuitID int) (*tuit.Tuit, error) {
 	res := &TuitEntity{}
 	txResult := r.database.Preload("Author").First(res, tuitID)
 
