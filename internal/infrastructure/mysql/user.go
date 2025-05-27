@@ -96,7 +96,8 @@ func (r *UserRepository) Create(ctx context.Context, user *user.User) (*user.Use
 func (r *UserRepository) Update(ctx context.Context, user *user.User) (*user.User, error) {
 	userEntity := NewEntityFromModel(*user)
 	old := &UserEntity{}
-	r.database.First(old, "id = ?", user.ID)
+	r.database.First(&old, user.ID)
+
 	if old.CreatedAt.IsZero() {
 		userEntity.CreatedAt = time.Now()
 		userEntity.UpdatedAt = time.Now()
@@ -104,6 +105,9 @@ func (r *UserRepository) Update(ctx context.Context, user *user.User) (*user.Use
 		userEntity.CreatedAt = old.CreatedAt
 		userEntity.UpdatedAt = time.Now()
 	}
+
+	userEntity.Model.ID = old.Model.ID
+
 	txResult := r.database.Save(userEntity)
 
 	if txResult.Error != nil {
