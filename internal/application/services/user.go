@@ -59,9 +59,14 @@ func (c *Service) Update(ctx context.Context, u *user.User) (*user.User, error) 
 		u.Password = oldUser.Password
 	}
 
+	securedUser, err := u.SecureUser()
+	if err != nil {
+		return nil, err
+	}
+
 	// Business Rule: User can't change email
 	u.Email = oldUser.Email
-	updatedUser, err := c.userRepo.Update(ctx, u)
+	updatedUser, err := c.userRepo.Update(ctx, securedUser)
 
 	if err != nil {
 		return nil, fmt.Errorf("syserror updating a user on repository: %w", err)

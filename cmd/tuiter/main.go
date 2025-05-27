@@ -113,7 +113,8 @@ func main() {
 
 	// Error Handlers
 	mysqlHandler := mysql.NewErrorHandler()
-	errHandler := handlers.NewErrorsHandler(mysqlHandler)
+	cryptHandler := security.NewBcryptErrorHandler()
+	errHandler := handlers.NewErrorsHandler(mysqlHandler, cryptHandler)
 
 	// Handlers
 	loginHandler := handlers.NewLogin(authenticator, errHandler)
