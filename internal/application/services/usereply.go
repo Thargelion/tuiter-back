@@ -7,22 +7,22 @@ import (
 )
 
 func (u *UseReply) ListByPage(ctx context.Context, pageID string) ([]*tuit.Tuit, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
 func (u *UseReply) Create(ctx context.Context, post *tuit.Tuit) error {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
 func (u *UseReply) AddLike(ctx context.Context, userID uint, tuitID int) error {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
 func (u *UseReply) RemoveLike(ctx context.Context, userID uint, tuitID int) error {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 

@@ -104,7 +104,7 @@ func (e *WrapperErrorRenderer) RenderError(err error) *ErrResponse {
 			return ErrInvalidRequest(err)
 		case errors.Is(err, syserror.ErrUnauthorized):
 			return ErrUnauthorized(err)
-		case errors.Is(errors.Unwrap(err), syserror.ErrNotFound):
+		case errors.Is(err, syserror.ErrNotFound):
 			return ErrNotFound(err)
 		default:
 			return ErrInternalServer(err)

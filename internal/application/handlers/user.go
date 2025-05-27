@@ -262,7 +262,7 @@ func (u *userEditPayload) ToUser() *user.User {
 }
 
 type userEditPayload struct {
-	Name      string `json:"name" validate:"required"`
+	Name      string `json:"name"       validate:"required"`
 	AvatarURL string `json:"avatar_url" validate:"required"`
 	Password  string `json:"password"`
 }

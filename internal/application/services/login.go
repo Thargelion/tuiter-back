@@ -6,6 +6,7 @@ import (
 
 	"tuiter.com/api/internal/domain/user"
 	"tuiter.com/api/pkg/security"
+	"tuiter.com/api/pkg/syserror"
 )
 
 func NewUserAuthenticator(userRepo user.LoginRepository, tokenHandler security.TokenHandler) *UserAuthenticator {
@@ -16,13 +17,13 @@ func (ua *UserAuthenticator) Login(ctx context.Context, login *user.User) (*user
 	storedUser, err := ua.userRepo.FindByEmail(ctx, login.Email)
 
 	if err != nil {
-		return nil, fmt.Errorf("syserror finding user by email: %w", err)
+		return nil, fmt.Errorf("%w: wrong user or password", syserror.ErrUnauthorized)
 	}
 
 	err = storedUser.CheckPassword(login.Password)
 
 	if err != nil {
-		return nil, fmt.Errorf("wrong password: %w", err)
+		return nil, fmt.Errorf("%w: wrong user or password", syserror.ErrUnauthorized)
 	}
 
 	token, err := ua.tokenHandler.GenerateToken(storedUser.ID, storedUser.Email, storedUser.Email)

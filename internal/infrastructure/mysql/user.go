@@ -113,7 +113,6 @@ func (r *UserRepository) Update(ctx context.Context, user *user.User) (*user.Use
 	}
 
 	return user, nil
-
 }
 
 func (r *UserRepository) FindByEmail(
