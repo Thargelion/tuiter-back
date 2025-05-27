@@ -24,11 +24,17 @@ func (w LogWriter) Write(p []byte) {
 }
 
 type ErrResponse struct {
-	Err            error  `json:"-"`                  // low-level runtime syserror
-	HTTPStatusCode int    `json:"-"`                  // handlers Response status code
-	StatusText     string `json:"status"`             // handlers-level status message
-	AppCode        int64  `json:"code,omitempty"`     // application-specific syserror code
-	ErrorText      string `json:"syserror,omitempty"` // application-level syserror message, for debugging
+	Err            error  `json:"-"`                 // low-level runtime syserror
+	HTTPStatusCode int    `json:"-"`                 // handlers Response status code
+	StatusText     string `json:"status"`            // handlers-level status message
+	AppCode        int64  `json:"code,omitempty"`    // application-specific syserror code
+	ErrorText      string `json:"message,omitempty"` // application-level syserror message, for debugging
+}
+
+func (e *ErrResponse) Render(_ http.ResponseWriter, r *http.Request) error {
+	render.Status(r, e.HTTPStatusCode)
+
+	return nil
 }
 
 func ErrInternalServer(err error) *ErrResponse {
@@ -49,6 +55,15 @@ func ErrNotFound(err error) *ErrResponse {
 	}
 }
 
+func ErrUnauthorized(err error) *ErrResponse {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: http.StatusUnauthorized,
+		StatusText:     "Unauthorized.",
+		ErrorText:      err.Error(),
+	}
+}
+
 func ErrInvalidRequest(err error) *ErrResponse {
 	return &ErrResponse{
 		Err:            err,
@@ -56,12 +71,6 @@ func ErrInvalidRequest(err error) *ErrResponse {
 		StatusText:     "Invalid request.",
 		ErrorText:      err.Error(),
 	}
-}
-
-func (e *ErrResponse) Render(_ http.ResponseWriter, r *http.Request) error {
-	render.Status(r, e.HTTPStatusCode)
-
-	return nil
 }
 
 func NewErrorsHandler(handlers ...ErrorHandler) *WrapperErrorRenderer {
@@ -91,10 +100,12 @@ func (e *WrapperErrorRenderer) RenderError(err error) *ErrResponse {
 
 	if err != nil {
 		switch {
-		case errors.Is(errors.Unwrap(err), syserror.ErrNotFound):
-			return ErrNotFound(err)
 		case errors.Is(err, syserror.ErrInvalidInput):
 			return ErrInvalidRequest(err)
+		case errors.Is(err, syserror.ErrUnauthorized):
+			return ErrUnauthorized(err)
+		case errors.Is(errors.Unwrap(err), syserror.ErrNotFound):
+			return ErrNotFound(err)
 		default:
 			return ErrInternalServer(err)
 		}

@@ -45,7 +45,8 @@ func (l *Login) Login(w http.ResponseWriter, r *http.Request) {
 	logged, err := l.auth.Login(r.Context(), securedUser)
 
 	if err != nil {
-		_ = render.Render(w, r, l.errorRenderer.RenderError(err))
+		renderedError := l.errorRenderer.RenderError(err)
+		_ = render.Render(w, r, renderedError)
 
 		return
 	}
