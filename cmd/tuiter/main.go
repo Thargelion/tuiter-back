@@ -29,6 +29,7 @@ const (
 	timeout           = 5 * time.Second
 	readHeaderTimeout = 3 * time.Second
 	tokenTimeoutHours = 24
+	tokenTimeoutDays  = 30
 )
 
 // @title Tuiter API
@@ -47,7 +48,7 @@ func main() {
 	chiRouter := chi.NewRouter()
 	// JWT
 	secret := os.Getenv("JWT_SECRET")
-	expiration := time.Hour * tokenTimeoutHours
+	expiration := time.Hour * tokenTimeoutHours * tokenTimeoutDays // 30 days
 	// Configure Chi
 	chiRouter.Use(middleware.Recoverer)
 	chiRouter.Use(middleware.Timeout(timeout))
