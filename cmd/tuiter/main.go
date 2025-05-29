@@ -120,7 +120,7 @@ func main() {
 	loginHandler := handlers.NewLogin(authenticator, errHandler)
 	userHandler := handlers.NewUserHandler(userService, tokenValidator, errHandler, logger)
 	userPostHandler := handlers.NewUserTuitHandler(userPostUseCases, tokenValidator, errHandler, logger)
-	tuitHandler := handlers.NewTuitHandler(tuitRepo, tokenValidator, errHandler, logger)
+	tuitHandler := handlers.NewTuitHandler(tuitRepo, userPostRepo, tokenValidator, errHandler, logger)
 	likeHandler := handlers.NewLikeHandler(userPostUseCases, tokenValidator, errHandler, logger)
 
 	// Routers
@@ -161,7 +161,7 @@ func main() {
 
 func printWelcomeMessage(port string) {
 	fmt.Printf("server running on port: %s. \n", port) //nolint:forbidigo
-	fmt.Print("" +                                     //nolint:forbidigo
+	fmt.Print("" + //nolint:forbidigo
 		"⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣤⣄⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄\n" +
 		"⠄⠄⠄⠄⠄⠄⠄⢀⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣤⡀⠄⠄⠄⠄⠄\n" +
 		"⠄⠄⠄⠄⠄⢀⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣆⠄⠄⠄⠄\n" +

@@ -8,6 +8,7 @@ import (
 	"tuiter.com/api/internal/domain/tuitpost"
 	"tuiter.com/api/pkg/logging"
 	"tuiter.com/api/pkg/query"
+	"tuiter.com/api/pkg/syserror"
 )
 
 const (
@@ -46,6 +47,10 @@ func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*
 		u.logger.Printf(ctx, "syserror from database when listing posts by page %v", txResult.Error)
 
 		return nil, fmt.Errorf("syserror from database when listing posts by page %w", txResult.Error)
+	}
+
+	if res == nil {
+		return nil, fmt.Errorf("%w:tuit not found", syserror.ErrNotFound)
 	}
 
 	return res, txResult.Error
