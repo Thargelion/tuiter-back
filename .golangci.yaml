@@ -1,13 +1,11 @@
+version: "2"
 linters:
-  enable-all: true
   disable:
     # Disabling deprecated linters
-    - execinquery
     - exportloopref
     # To fix later
     - dupl
     - forcetypeassert
-    - gomnd
     # Disabling by decision
     - depguard
     - exhaustruct
@@ -15,4 +13,3 @@ linters:
     - prealloc
     - tagliatelle
 
-version: "2"

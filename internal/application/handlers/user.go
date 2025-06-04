@@ -134,7 +134,7 @@ func (u *User) MeUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	userId, err := u.userExtractor.ExtractUserId(token)
+	userId, _ := u.userExtractor.ExtractUserId(token)
 	userFound, err := u.useCases.FindUserByID(request.Context(), strconv.FormatInt(int64(userId), 10))
 
 	if err != nil {
