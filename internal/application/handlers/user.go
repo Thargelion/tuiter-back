@@ -43,13 +43,12 @@ type User struct {
 func (u *User) Search(writer http.ResponseWriter, request *http.Request) {
 	var filter userFilter
 
-	var decoder = schema.NewDecoder()
+	decoder := schema.NewDecoder()
 
 	var query map[string]interface{}
 
 	queryValues := request.URL.Query()
 	err := decoder.Decode(&filter, queryValues)
-
 	if err != nil {
 		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
 		if err != nil {
@@ -64,7 +63,6 @@ func (u *User) Search(writer http.ResponseWriter, request *http.Request) {
 	rawFilter, _ := json.Marshal(filter) //nolint:errchkjson
 	_ = json.Unmarshal(rawFilter, &query)
 	users, err := u.useCases.Search(request.Context(), query)
-
 	if err != nil {
 		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
 		if err != nil {
@@ -96,7 +94,6 @@ func (u *User) Search(writer http.ResponseWriter, request *http.Request) {
 func (u *User) FindUserByID(writer http.ResponseWriter, request *http.Request) {
 	id := chi.URLParam(request, "id")
 	userFound, err := u.useCases.FindUserByID(request.Context(), id)
-
 	if err != nil {
 		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
 		if err != nil {
@@ -134,9 +131,11 @@ func (u *User) MeUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	userId, err := u.userExtractor.ExtractUserId(token)
-	userFound, err := u.useCases.FindUserByID(request.Context(), strconv.FormatInt(int64(userId), 10))
-
+	userId, _ := u.userExtractor.ExtractUserId(token)
+	userFound, err := u.useCases.FindUserByID(
+		request.Context(),
+		strconv.FormatInt(int64(userId), 10),
+	)
 	if err != nil {
 		err := render.Render(writer, request, u.errorRenderer.RenderError(err))
 		if err != nil {
@@ -196,7 +195,6 @@ func (u *User) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updated, err := u.useCases.Update(r.Context(), model)
-
 	if err != nil {
 		_ = render.Render(w, r, u.errorRenderer.RenderError(err))
 	}
@@ -245,7 +243,6 @@ func (u *User) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (u *userEditPayload) Bind(_ *http.Request) error {
 	v := validator.New()
 	err := v.Struct(u)
-
 	if err != nil {
 		return fmt.Errorf("validation failed: %w", err)
 	}
@@ -262,7 +259,7 @@ func (u *userEditPayload) ToUser() *user.User {
 }
 
 type userEditPayload struct {
-	Name      string `json:"name" validate:"required"`
+	Name      string `json:"name"       validate:"required"`
 	AvatarURL string `json:"avatar_url" validate:"required"`
 	Password  string `json:"password"`
 }
@@ -277,7 +274,6 @@ type userCreatePayload struct {
 func (u *userCreatePayload) Bind(_ *http.Request) error {
 	v := validator.New()
 	err := v.Struct(u)
-
 	if err != nil {
 		return fmt.Errorf("validation failed: %w", err)
 	}

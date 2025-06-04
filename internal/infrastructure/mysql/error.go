@@ -12,8 +12,7 @@ type ErrorHandler interface {
 	HandleError(err error) error
 }
 
-type GormErrorHandler struct {
-}
+type GormErrorHandler struct{}
 
 func NewErrorHandler() *GormErrorHandler {
 	return &GormErrorHandler{}

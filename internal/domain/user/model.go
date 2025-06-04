@@ -27,6 +27,7 @@ func (u *User) SecureUser() (*User, error) {
 	}
 
 	return &User{
+		ID:        u.ID,
 		Name:      u.Name,
 		Email:     u.Email,
 		AvatarURL: u.AvatarURL,

@@ -18,7 +18,6 @@ type Service struct {
 
 func (c *Service) Search(ctx context.Context, query map[string]interface{}) ([]*user.User, error) {
 	users, err := c.userRepo.Search(ctx, query)
-
 	if err != nil {
 		return nil, fmt.Errorf("syserror searching for a user on repository: %w", err)
 	}
@@ -28,7 +27,6 @@ func (c *Service) Search(ctx context.Context, query map[string]interface{}) ([]*
 
 func (c *Service) FindUserByID(ctx context.Context, id string) (*user.User, error) {
 	userByID, err := c.userRepo.FindUserByID(ctx, id)
-
 	if err != nil {
 		return nil, fmt.Errorf("syserror searching for a user on repository: %w", err)
 	}
@@ -40,7 +38,6 @@ func (c *Service) create(ctx context.Context, user *user.User) (*user.User, erro
 	user.AvatarURL = c.generateAvatar.New(user.Name)
 
 	newUser, err := c.userRepo.Create(ctx, user)
-
 	if err != nil {
 		return nil, fmt.Errorf("syserror creating a user on repository: %w", err)
 	}
@@ -61,8 +58,13 @@ func (c *Service) Update(ctx context.Context, u *user.User) (*user.User, error) 
 
 	// Business Rule: User can't change email
 	u.Email = oldUser.Email
-	updatedUser, err := c.userRepo.Update(ctx, u)
+	u.ID = oldUser.ID
+	securedUser, err := u.SecureUser()
+	if err != nil {
+		return nil, err
+	}
 
+	updatedUser, err := c.userRepo.Update(ctx, securedUser)
 	if err != nil {
 		return nil, fmt.Errorf("syserror updating a user on repository: %w", err)
 	}
@@ -72,19 +74,16 @@ func (c *Service) Update(ctx context.Context, u *user.User) (*user.User, error) 
 
 func (c *Service) CreateAndLogin(ctx context.Context, u *user.User) (*user.Logged, error) {
 	secureUser, err := u.SecureUser()
-
 	if err != nil {
 		return nil, fmt.Errorf("syserror securing user: %w", err)
 	}
 
 	newUser, err := c.create(ctx, secureUser)
-
 	if err != nil {
 		return nil, fmt.Errorf("syserror creating user: %w", err)
 	}
 
 	token, err := c.tokenHandler.GenerateToken(newUser.ID, newUser.Email, newUser.Email)
-
 	if err != nil {
 		return nil, fmt.Errorf("syserror generating token: %w", err)
 	}

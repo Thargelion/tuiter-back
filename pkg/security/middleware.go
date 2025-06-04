@@ -24,7 +24,6 @@ func (a *AuthenticatorMiddleware) Middleware(next http.Handler) http.Handler {
 		tokenString := request.Header.Get("Authorization")
 
 		token, err := a.validator.ValidateToken(tokenString)
-
 		if err != nil {
 			http.Error(writer, "Invalid token", http.StatusUnauthorized)
 

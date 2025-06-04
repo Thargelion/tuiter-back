@@ -17,9 +17,9 @@ func (u *UserEntity) TableName() string {
 func (u *UserEntity) ToModel() user.User {
 	return user.User{
 		ID:        u.User.ID,
-		Name:      u.User.Name,
+		Name:      u.Name,
 		Email:     u.Email,
-		AvatarURL: u.User.AvatarURL,
+		AvatarURL: u.AvatarURL,
 	}
 }
 
@@ -48,7 +48,10 @@ type UserRepository struct {
 	logger   logging.ContextualLogger
 }
 
-func (r *UserRepository) Search(ctx context.Context, query map[string]interface{}) ([]*user.User, error) {
+func (r *UserRepository) Search(
+	ctx context.Context,
+	query map[string]interface{},
+) ([]*user.User, error) {
 	var txResult *gorm.DB
 
 	var res []*user.User
@@ -69,7 +72,7 @@ func (r *UserRepository) Search(ctx context.Context, query map[string]interface{
 }
 
 func (r *UserRepository) FindUserByID(ctx context.Context, userID string) (*user.User, error) {
-	var res = &user.User{}
+	res := &user.User{}
 	txResult := r.database.First(&res, "id = ?", userID)
 
 	if txResult.Error != nil {
@@ -96,7 +99,8 @@ func (r *UserRepository) Create(ctx context.Context, user *user.User) (*user.Use
 func (r *UserRepository) Update(ctx context.Context, user *user.User) (*user.User, error) {
 	userEntity := NewEntityFromModel(*user)
 	old := &UserEntity{}
-	r.database.First(old, "id = ?", user.ID)
+	r.database.First(&old, user.ID)
+
 	if old.CreatedAt.IsZero() {
 		userEntity.CreatedAt = time.Now()
 		userEntity.UpdatedAt = time.Now()
@@ -104,6 +108,8 @@ func (r *UserRepository) Update(ctx context.Context, user *user.User) (*user.Use
 		userEntity.CreatedAt = old.CreatedAt
 		userEntity.UpdatedAt = time.Now()
 	}
+
+	userEntity.Model.ID = old.Model.ID
 	txResult := r.database.Save(userEntity)
 
 	if txResult.Error != nil {
@@ -113,14 +119,13 @@ func (r *UserRepository) Update(ctx context.Context, user *user.User) (*user.Use
 	}
 
 	return user, nil
-
 }
 
 func (r *UserRepository) FindByEmail(
 	_ context.Context,
 	email string,
 ) (*user.User, error) {
-	var res = &user.User{}
+	res := &user.User{}
 	txResult := r.database.First(&res, "email = ?", email)
 
 	if txResult.Error != nil {

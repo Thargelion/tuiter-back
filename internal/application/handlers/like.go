@@ -45,7 +45,6 @@ type LikeHandler struct {
 // @Router /me/tuits/{id}/likes [post].
 func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request) {
 	tuitID, err := strconv.Atoi(chi.URLParam(request, "id"))
-
 	if err != nil {
 		_ = render.Render(writer, request, ErrInvalidRequest(errors.New("invalid tuit id")))
 
@@ -61,7 +60,6 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 	}
 
 	userId, err := l.userExtractor.ExtractUserId(token)
-
 	if err != nil {
 		_ = render.Render(writer, request, ErrInvalidRequest(err))
 
@@ -69,7 +67,6 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 	}
 
 	userTuit, err := l.liker.AddLike(request.Context(), userId, tuitID)
-
 	if err != nil {
 		_ = render.Render(writer, request, l.errorRenderer.RenderError(err))
 
@@ -77,7 +74,6 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 	}
 
 	err = render.Render(writer, request, &userPostPayload{userTuit})
-
 	if err != nil {
 		l.logger.Printf(request.Context(), "syserror rendering response: %v", err)
 	}
@@ -94,7 +90,6 @@ func (l *LikeHandler) AddLike(writer http.ResponseWriter, request *http.Request)
 // @Router /me/tuits/{id}/likes [delete].
 func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Request) {
 	tuitID, err := strconv.Atoi(chi.URLParam(request, "id"))
-
 	if err != nil {
 		_ = render.Render(writer, request, ErrInvalidRequest(errors.New("invalid tuit id")))
 
@@ -110,7 +105,6 @@ func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Reque
 	}
 
 	userId, err := l.userExtractor.ExtractUserId(token)
-
 	if err != nil {
 		_ = render.Render(writer, request, ErrInvalidRequest(err))
 
@@ -118,7 +112,6 @@ func (l *LikeHandler) RemoveLike(writer http.ResponseWriter, request *http.Reque
 	}
 
 	userTuit, err := l.liker.RemoveLike(request.Context(), userId, tuitID)
-
 	if err != nil {
 		err := render.Render(writer, request, l.errorRenderer.RenderError(err))
 		if err != nil {
