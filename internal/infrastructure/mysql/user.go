@@ -69,7 +69,7 @@ func (r *UserRepository) Search(ctx context.Context, query map[string]interface{
 }
 
 func (r *UserRepository) FindUserByID(ctx context.Context, userID string) (*user.User, error) {
-	var res = &user.User{}
+	res := &user.User{}
 	txResult := r.database.First(&res, "id = ?", userID)
 
 	if txResult.Error != nil {
@@ -122,7 +122,7 @@ func (r *UserRepository) FindByEmail(
 	_ context.Context,
 	email string,
 ) (*user.User, error) {
-	var res = &user.User{}
+	res := &user.User{}
 	txResult := r.database.First(&res, "email = ?", email)
 
 	if txResult.Error != nil {

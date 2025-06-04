@@ -139,7 +139,6 @@ func newPostList(posts []*tuit.Tuit) []render.Renderer {
 func (th *TuitHandler) Search(writer http.ResponseWriter, request *http.Request) {
 	pageID := request.URL.Query().Get(string(PageIDKey))
 	posts, err := th.repo.ListByPage(request.Context(), pageID)
-
 	if err != nil {
 		err := render.Render(writer, request, ErrInvalidRequest(err))
 		if err != nil {
@@ -183,10 +182,8 @@ func (th *TuitHandler) CreateTuit(w http.ResponseWriter, r *http.Request) {
 	newTuit.Author.ID = userID
 
 	err = th.repo.Create(r.Context(), newTuit)
-
 	if err != nil {
 		err := render.Render(w, r, ErrInvalidRequest(err))
-
 		if err != nil {
 			return
 		}
@@ -238,10 +235,8 @@ func (th *TuitHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 	newTuit.ParentID = &utuitID
 
 	err = th.repo.Create(r.Context(), newTuit)
-
 	if err != nil {
 		err := render.Render(w, r, ErrInvalidRequest(err))
-
 		if err != nil {
 			return
 		}

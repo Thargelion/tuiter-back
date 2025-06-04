@@ -28,7 +28,6 @@ func (u *UserTuitService) PaginateReplies(
 	page int,
 ) ([]*tuitpost.TuitPost, error) {
 	userTuitPage, err := u.userPostRepository.RepliesByPage(ctx, userID, tuitID, page)
-
 	if err != nil {
 		return nil, fmt.Errorf("error paginating user posts: %w", err)
 	}
@@ -43,7 +42,6 @@ func (u *UserTuitService) Paginate(
 	params query.Params,
 ) ([]*tuitpost.TuitPost, error) {
 	userTuitPage, err := u.userPostRepository.SearchByPage(ctx, userID, page, params)
-
 	if err != nil {
 		return nil, fmt.Errorf("error paginating user posts: %w", err)
 	}
@@ -53,13 +51,11 @@ func (u *UserTuitService) Paginate(
 
 func (u *UserTuitService) AddLike(ctx context.Context, userID uint, tuitID int) (*tuitpost.TuitPost, error) {
 	err := u.tuitRepository.AddLike(ctx, userID, tuitID)
-
 	if err != nil {
 		return nil, fmt.Errorf("error adding like: %w", err)
 	}
 
 	userTuit, err := u.userPostRepository.GetByID(ctx, userID, tuitID)
-
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving user post: %w", err)
 	}
@@ -69,13 +65,11 @@ func (u *UserTuitService) AddLike(ctx context.Context, userID uint, tuitID int) 
 
 func (u *UserTuitService) RemoveLike(ctx context.Context, userID uint, tuitID int) (*tuitpost.TuitPost, error) {
 	err := u.tuitRepository.RemoveLike(ctx, userID, tuitID)
-
 	if err != nil {
 		return nil, fmt.Errorf("error removing like: %w", err)
 	}
 
 	userTuit, err := u.userPostRepository.GetByID(ctx, userID, tuitID)
-
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving user post: %w", err)
 	}

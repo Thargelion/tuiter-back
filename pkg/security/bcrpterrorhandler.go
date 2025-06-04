@@ -12,8 +12,7 @@ func NewBcryptErrorHandler() *BcryptErrorHandler {
 	return &BcryptErrorHandler{}
 }
 
-type BcryptErrorHandler struct {
-}
+type BcryptErrorHandler struct{}
 
 func (bc *BcryptErrorHandler) HandleError(err error) error {
 	if err != nil {

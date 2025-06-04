@@ -153,7 +153,6 @@ func main() {
 	printWelcomeMessage(port)
 
 	err = server.ListenAndServe()
-
 	if err != nil {
 		panic(err)
 	}
@@ -161,7 +160,7 @@ func main() {
 
 func printWelcomeMessage(port string) {
 	fmt.Printf("server running on port: %s. \n", port) //nolint:forbidigo
-	fmt.Print("" + //nolint:forbidigo
+	fmt.Print("" +                                     //nolint:forbidigo
 		"⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣠⣤⣤⣤⣤⣤⣄⣀⡀⠄⠄⠄⠄⠄⠄⠄⠄\n" +
 		"⠄⠄⠄⠄⠄⠄⠄⢀⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣤⡀⠄⠄⠄⠄⠄\n" +
 		"⠄⠄⠄⠄⠄⢀⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣆⠄⠄⠄⠄\n" +

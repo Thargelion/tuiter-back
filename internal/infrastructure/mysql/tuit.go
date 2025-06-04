@@ -106,7 +106,6 @@ func (r *PostRepository) ReplyListByPage(_ context.Context, parentID uint, pageI
 func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) error {
 	var entity TuitEntity
 	err := r.database.First(&entity, tuitID).Error
-
 	if err != nil {
 		r.logger.Printf(ctx, "tuit not found when adding like %v", err)
 
@@ -124,7 +123,6 @@ func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) e
 	}()
 
 	err = mainTx.Save(entity).Error
-
 	if err != nil {
 		mainTx.Rollback()
 		r.logger.Printf(ctx, "syserror from database when adding like %v", err)
@@ -146,7 +144,6 @@ func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) e
 func (r *PostRepository) RemoveLike(ctx context.Context, userID uint, tuitID int) error {
 	var entity TuitEntity
 	err := r.database.First(&entity, tuitID).Error
-
 	if err != nil {
 		r.logger.Printf(ctx, "tuit not found when adding like %v", err)
 

@@ -30,7 +30,6 @@ func (j *JWTHandler) GenerateToken(id uint, email string, username string) (stri
 	})
 
 	tokenString, err := token.SignedString(j.secret)
-
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", syserror.ErrInternal, err)
 	}
@@ -42,7 +41,6 @@ func (j *JWTHandler) ValidateToken(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(_ *jwt.Token) (interface{}, error) {
 		return j.secret, nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", syserror.ErrUnauthorized, err)
 	}
@@ -61,7 +59,6 @@ func (j *JWTHandler) ExtractClaims(token *jwt.Token) (jwt.MapClaims, error) {
 
 func (j *JWTHandler) ExtractUserId(token *jwt.Token) (uint, error) {
 	claims, err := j.ExtractClaims(token)
-
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", "invalid claims", syserror.ErrInternal)
 	}

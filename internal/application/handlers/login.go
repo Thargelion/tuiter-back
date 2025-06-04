@@ -33,7 +33,6 @@ type Login struct {
 func (l *Login) Login(w http.ResponseWriter, r *http.Request) {
 	loginPayload := &loginPayload{}
 	err := render.Bind(r, loginPayload)
-
 	if err != nil {
 		_ = render.Render(w, r, l.errorRenderer.RenderError(err))
 
@@ -43,7 +42,6 @@ func (l *Login) Login(w http.ResponseWriter, r *http.Request) {
 	securedUser := loginPayload.toModel()
 
 	logged, err := l.auth.Login(r.Context(), securedUser)
-
 	if err != nil {
 		renderedError := l.errorRenderer.RenderError(err)
 		_ = render.Render(w, r, renderedError)
@@ -57,7 +55,6 @@ func (l *Login) Login(w http.ResponseWriter, r *http.Request) {
 func (l *loginPayload) Bind(_ *http.Request) error {
 	v := validator.New()
 	err := v.Struct(l)
-
 	if err != nil {
 		return fmt.Errorf("validation failed: %w", err)
 	}

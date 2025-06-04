@@ -9,8 +9,10 @@ import (
 	"tuiter.com/api/pkg/syserror"
 )
 
-var errUnknown = errors.New("unknown error")
-var errTokenNotFound = errors.New("token not found")
+var (
+	errUnknown       = errors.New("unknown error")
+	errTokenNotFound = errors.New("token not found")
+)
 
 type LogWriter struct {
 	http.ResponseWriter
