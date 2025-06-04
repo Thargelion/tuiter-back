@@ -107,7 +107,6 @@ func (r *UserRepository) Update(ctx context.Context, user *user.User) (*user.Use
 	}
 
 	userEntity.Model.ID = old.Model.ID
-
 	txResult := r.database.Save(userEntity)
 
 	if txResult.Error != nil {

@@ -62,7 +62,6 @@ func (c *Service) Update(ctx context.Context, u *user.User) (*user.User, error) 
 	// Business Rule: User can't change email
 	u.Email = oldUser.Email
 	u.ID = oldUser.ID
-
 	securedUser, err := u.SecureUser()
 	if err != nil {
 		return nil, err

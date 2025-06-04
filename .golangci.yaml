@@ -14,3 +14,5 @@ linters:
     - gofumpt
     - prealloc
     - tagliatelle
+
+version: "2"
