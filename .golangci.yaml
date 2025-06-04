@@ -1,10 +1,6 @@
 version: "2"
 linters:
-  enable:
-    - gofumpt
   disable:
-    # Disabling deprecated linters
-    - exportloopref
     # To fix later
     - dupl
     - forcetypeassert
@@ -13,7 +9,26 @@ linters:
     - exhaustruct
     - prealloc
     - tagliatelle
-linters-settings:
-  gofumpt:
-    enabled: true
-
+  exclusions:
+    warn-unused: true
+    rules:
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - gocyclo
+          - errcheck
+          - dupl
+          - gosec
+      # Run some linter only for test files by excluding its issues for everything else.
+      - path-except: _test\.go
+        linters:
+          - forbidigo
+formatters:
+# Enable specific formatter.
+# Default: [] (uses standard Go formatting)
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines

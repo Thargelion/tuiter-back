@@ -9,7 +9,10 @@ import (
 	"tuiter.com/api/pkg/syserror"
 )
 
-func NewUserAuthenticator(userRepo user.LoginRepository, tokenHandler security.TokenHandler) *UserAuthenticator {
+func NewUserAuthenticator(
+	userRepo user.LoginRepository,
+	tokenHandler security.TokenHandler,
+) *UserAuthenticator {
 	return &UserAuthenticator{userRepo: userRepo, tokenHandler: tokenHandler}
 }
 

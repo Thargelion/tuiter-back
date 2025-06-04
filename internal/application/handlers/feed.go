@@ -72,7 +72,12 @@ func (l *UserTuitHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 	userID := uint(claims["sub"].(float64))
 
-	userPosts, err := l.useCases.Paginate(r.Context(), userID, page, query.FromURLQuery(r.URL.Query()))
+	userPosts, err := l.useCases.Paginate(
+		r.Context(),
+		userID,
+		page,
+		query.FromURLQuery(r.URL.Query()),
+	)
 	if err != nil {
 		_ = render.Render(w, r, ErrInvalidRequest(err))
 	}
@@ -145,7 +150,7 @@ func (u *userPostPayload) Bind(_ *http.Request) error {
 }
 
 func (u *userPostPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
-	u.Liked = u.TuitPost.Liked
+	u.Liked = u.Liked
 
 	return nil
 }

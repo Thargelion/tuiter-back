@@ -17,9 +17,9 @@ func (u *UserEntity) TableName() string {
 func (u *UserEntity) ToModel() user.User {
 	return user.User{
 		ID:        u.User.ID,
-		Name:      u.User.Name,
+		Name:      u.Name,
 		Email:     u.Email,
-		AvatarURL: u.User.AvatarURL,
+		AvatarURL: u.AvatarURL,
 	}
 }
 
@@ -48,7 +48,10 @@ type UserRepository struct {
 	logger   logging.ContextualLogger
 }
 
-func (r *UserRepository) Search(ctx context.Context, query map[string]interface{}) ([]*user.User, error) {
+func (r *UserRepository) Search(
+	ctx context.Context,
+	query map[string]interface{},
+) ([]*user.User, error) {
 	var txResult *gorm.DB
 
 	var res []*user.User

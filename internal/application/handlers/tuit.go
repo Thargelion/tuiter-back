@@ -277,14 +277,26 @@ func (th *TuitHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Get tuit ID from URL parameter
 	tuitID := chi.URLParam(r, "tuitID")
 	if tuitID == "" {
-		_ = render.Render(w, r, th.errorRenderer.RenderError(fmt.Errorf("%w: tuit ID is required", syserror.ErrInvalidInput)))
+		_ = render.Render(
+			w,
+			r,
+			th.errorRenderer.RenderError(
+				fmt.Errorf("%w: tuit ID is required", syserror.ErrInvalidInput),
+			),
+		)
 		return
 	}
 
 	// Convert tuitID from string to int
 	id, err := strconv.Atoi(tuitID)
 	if err != nil {
-		_ = render.Render(w, r, th.errorRenderer.RenderError(fmt.Errorf("%w: id is not a number", syserror.ErrInvalidInput)))
+		_ = render.Render(
+			w,
+			r,
+			th.errorRenderer.RenderError(
+				fmt.Errorf("%w: id is not a number", syserror.ErrInvalidInput),
+			),
+		)
 		return
 	}
 
@@ -292,7 +304,11 @@ func (th *TuitHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	tuitPost, err := th.tuitPostRepo.GetByID(r.Context(), userID, id)
 	if err != nil {
 		th.logger.Printf(r.Context(), "error fetching tuit")
-		_ = render.Render(w, r, th.errorRenderer.RenderError(fmt.Errorf("error retrieving tuit of id %d: %w", id, err)))
+		_ = render.Render(
+			w,
+			r,
+			th.errorRenderer.RenderError(fmt.Errorf("error retrieving tuit of id %d: %w", id, err)),
+		)
 		return
 	}
 

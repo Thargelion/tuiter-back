@@ -9,7 +9,10 @@ import (
 	"tuiter.com/api/pkg/query"
 )
 
-func NewUserPostService(tuitRepo tuit.Repository, userPostRepo tuitpost.Repository) *UserTuitService {
+func NewUserPostService(
+	tuitRepo tuit.Repository,
+	userPostRepo tuitpost.Repository,
+) *UserTuitService {
 	return &UserTuitService{
 		tuitRepository:     tuitRepo,
 		userPostRepository: userPostRepo,
@@ -49,7 +52,11 @@ func (u *UserTuitService) Paginate(
 	return userTuitPage, nil
 }
 
-func (u *UserTuitService) AddLike(ctx context.Context, userID uint, tuitID int) (*tuitpost.TuitPost, error) {
+func (u *UserTuitService) AddLike(
+	ctx context.Context,
+	userID uint,
+	tuitID int,
+) (*tuitpost.TuitPost, error) {
 	err := u.tuitRepository.AddLike(ctx, userID, tuitID)
 	if err != nil {
 		return nil, fmt.Errorf("error adding like: %w", err)
@@ -63,7 +70,11 @@ func (u *UserTuitService) AddLike(ctx context.Context, userID uint, tuitID int) 
 	return userTuit, nil
 }
 
-func (u *UserTuitService) RemoveLike(ctx context.Context, userID uint, tuitID int) (*tuitpost.TuitPost, error) {
+func (u *UserTuitService) RemoveLike(
+	ctx context.Context,
+	userID uint,
+	tuitID int,
+) (*tuitpost.TuitPost, error) {
 	err := u.tuitRepository.RemoveLike(ctx, userID, tuitID)
 	if err != nil {
 		return nil, fmt.Errorf("error removing like: %w", err)

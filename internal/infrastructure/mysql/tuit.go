@@ -80,13 +80,20 @@ func (r *PostRepository) ListByPage(_ context.Context, pageID string) ([]*tuit.T
 	txResult := r.database.Limit(defaultPageSize).Offset(offset).Find(&res)
 
 	if txResult.Error != nil {
-		return nil, fmt.Errorf("syserror from database when listing posts by page %w", txResult.Error)
+		return nil, fmt.Errorf(
+			"syserror from database when listing posts by page %w",
+			txResult.Error,
+		)
 	}
 
 	return res, nil
 }
 
-func (r *PostRepository) ReplyListByPage(_ context.Context, parentID uint, pageID int) ([]*tuit.Tuit, error) {
+func (r *PostRepository) ReplyListByPage(
+	_ context.Context,
+	parentID uint,
+	pageID int,
+) ([]*tuit.Tuit, error) {
 	res := make([]*tuit.Tuit, 0)
 
 	if pageID <= 0 {
@@ -94,10 +101,15 @@ func (r *PostRepository) ReplyListByPage(_ context.Context, parentID uint, pageI
 	}
 
 	offset := (pageID - 1) * defaultPageSize
-	txResult := r.database.Limit(defaultPageSize).Offset(offset).Find(&res, "parent_id = ?", parentID)
+	txResult := r.database.Limit(defaultPageSize).
+		Offset(offset).
+		Find(&res, "parent_id = ?", parentID)
 
 	if txResult.Error != nil {
-		return nil, fmt.Errorf("syserror from database when listing posts by page %w", txResult.Error)
+		return nil, fmt.Errorf(
+			"syserror from database when listing posts by page %w",
+			txResult.Error,
+		)
 	}
 
 	return res, nil
@@ -130,7 +142,11 @@ func (r *PostRepository) AddLike(ctx context.Context, userID uint, tuitID int) e
 		return fmt.Errorf("syserror from database when adding like %w", err)
 	}
 
-	err = mainTx.Exec("INSERT INTO tuit_likes (tuit_entity_id, user_entity_id) VALUES (?, ?)", tuitID, userID).Error
+	err = mainTx.Exec(
+		"INSERT INTO tuit_likes (tuit_entity_id, user_entity_id) VALUES (?, ?)",
+		tuitID,
+		userID,
+	).Error
 	if err != nil {
 		mainTx.Rollback()
 		r.logger.Printf(ctx, "syserror from database when registering author and tuit %v", err)
