@@ -150,8 +150,6 @@ func (u *userPostPayload) Bind(_ *http.Request) error {
 }
 
 func (u *userPostPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
-	u.Liked = u.Liked
-
 	return nil
 }
 
