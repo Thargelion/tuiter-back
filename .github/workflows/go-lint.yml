@@ -1,12 +1,15 @@
 name: Scan with Go Linter 🔍
 run-name: ${{ github.actor }} protecting code quality! 🛡️
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches:
-      - main
-      - develop
-      - 'releases/**'
+     - main
+     - develop
+     - 'releases/**'
 
 jobs:
   golangci:
