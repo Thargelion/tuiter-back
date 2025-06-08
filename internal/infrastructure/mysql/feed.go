@@ -8,6 +8,7 @@ import (
 	"tuiter.com/api/internal/domain/tuitpost"
 	"tuiter.com/api/pkg/logging"
 	"tuiter.com/api/pkg/query"
+	"tuiter.com/api/pkg/syserror"
 )
 
 const (
@@ -35,7 +36,11 @@ type FeedRepository struct {
 	logger   logging.ContextualLogger
 }
 
-func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*tuitpost.TuitPost, error) {
+func (u FeedRepository) GetByID(
+	ctx context.Context,
+	userID uint,
+	postID int,
+) (*tuitpost.TuitPost, error) {
 	var res *tuitpost.TuitPost
 	txResult := u.dbEngine.Raw(
 		projectedPostByIDQuery+";",
@@ -45,13 +50,25 @@ func (u FeedRepository) GetByID(ctx context.Context, userID uint, postID int) (*
 	if txResult.Error != nil {
 		u.logger.Printf(ctx, "syserror from database when listing posts by page %v", txResult.Error)
 
-		return nil, fmt.Errorf("syserror from database when listing posts by page %w", txResult.Error)
+		return nil, fmt.Errorf(
+			"syserror from database when listing posts by page %w",
+			txResult.Error,
+		)
+	}
+
+	if res == nil {
+		return nil, fmt.Errorf("%w:tuit not found", syserror.ErrNotFound)
 	}
 
 	return res, txResult.Error
 }
 
-func (u FeedRepository) RepliesByPage(ctx context.Context, userID uint, parentID uint, page int) ([]*tuitpost.TuitPost, error) {
+func (u FeedRepository) RepliesByPage(
+	ctx context.Context,
+	userID uint,
+	parentID uint,
+	page int,
+) ([]*tuitpost.TuitPost, error) {
 	var res []*tuitpost.TuitPost
 
 	if page <= 0 {
@@ -74,13 +91,21 @@ func (u FeedRepository) RepliesByPage(ctx context.Context, userID uint, parentID
 	if txResult.Error != nil {
 		u.logger.Printf(ctx, "syserror from database when listing posts by page %v", txResult.Error)
 
-		return nil, fmt.Errorf("syserror from database when listing posts by page %w", txResult.Error)
+		return nil, fmt.Errorf(
+			"syserror from database when listing posts by page %w",
+			txResult.Error,
+		)
 	}
 
 	return res, nil
 }
 
-func (u FeedRepository) SearchByPage(ctx context.Context, userID uint, page int, params query.Params) ([]*tuitpost.TuitPost, error) {
+func (u FeedRepository) SearchByPage(
+	ctx context.Context,
+	userID uint,
+	page int,
+	params query.Params,
+) ([]*tuitpost.TuitPost, error) {
 	var res []*tuitpost.TuitPost
 
 	if page <= 0 {
@@ -112,7 +137,10 @@ func (u FeedRepository) SearchByPage(ctx context.Context, userID uint, page int,
 	if txResult.Error != nil {
 		u.logger.Printf(ctx, "syserror from database when listing posts by page %v", txResult.Error)
 
-		return nil, fmt.Errorf("syserror from database when listing posts by page %w", txResult.Error)
+		return nil, fmt.Errorf(
+			"syserror from database when listing posts by page %w",
+			txResult.Error,
+		)
 	}
 
 	return res, nil

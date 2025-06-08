@@ -29,6 +29,7 @@ const (
 	timeout           = 5 * time.Second
 	readHeaderTimeout = 3 * time.Second
 	tokenTimeoutHours = 24
+	tokenTimeoutDays  = 30
 )
 
 // @title Tuiter API
@@ -47,7 +48,7 @@ func main() {
 	chiRouter := chi.NewRouter()
 	// JWT
 	secret := os.Getenv("JWT_SECRET")
-	expiration := time.Hour * tokenTimeoutHours
+	expiration := time.Hour * tokenTimeoutHours * tokenTimeoutDays // 30 days
 	// Configure Chi
 	chiRouter.Use(middleware.Recoverer)
 	chiRouter.Use(middleware.Timeout(timeout))
@@ -112,13 +113,25 @@ func main() {
 
 	// Error Handlers
 	mysqlHandler := mysql.NewErrorHandler()
-	errHandler := handlers.NewErrorsHandler(mysqlHandler)
+	cryptHandler := security.NewBcryptErrorHandler()
+	errHandler := handlers.NewErrorsHandler(mysqlHandler, cryptHandler)
 
 	// Handlers
 	loginHandler := handlers.NewLogin(authenticator, errHandler)
 	userHandler := handlers.NewUserHandler(userService, tokenValidator, errHandler, logger)
-	userPostHandler := handlers.NewUserTuitHandler(userPostUseCases, tokenValidator, errHandler, logger)
-	tuitHandler := handlers.NewTuitHandler(tuitRepo, tokenValidator, errHandler, logger)
+	userPostHandler := handlers.NewUserTuitHandler(
+		userPostUseCases,
+		tokenValidator,
+		errHandler,
+		logger,
+	)
+	tuitHandler := handlers.NewTuitHandler(
+		tuitRepo,
+		userPostRepo,
+		tokenValidator,
+		errHandler,
+		logger,
+	)
 	likeHandler := handlers.NewLikeHandler(userPostUseCases, tokenValidator, errHandler, logger)
 
 	// Routers
@@ -151,7 +164,6 @@ func main() {
 	printWelcomeMessage(port)
 
 	err = server.ListenAndServe()
-
 	if err != nil {
 		panic(err)
 	}
