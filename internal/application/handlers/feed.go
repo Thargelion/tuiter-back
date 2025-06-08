@@ -49,7 +49,6 @@ func (l *UserTuitHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 	l.logger.Printf(r.Context(), "page: %s", test)
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-
 	if err != nil {
 		l.logger.Printf(r.Context(), "syserror rendering invalid r: %v", err)
 
@@ -65,7 +64,6 @@ func (l *UserTuitHandler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	claims, err := l.claimsExtractor.ExtractClaims(token)
-
 	if err != nil {
 		_ = render.Render(w, r, ErrInvalidRequest(err))
 
@@ -74,8 +72,12 @@ func (l *UserTuitHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 	userID := uint(claims["sub"].(float64))
 
-	userPosts, err := l.useCases.Paginate(r.Context(), userID, page, query.FromURLQuery(r.URL.Query()))
-
+	userPosts, err := l.useCases.Paginate(
+		r.Context(),
+		userID,
+		page,
+		query.FromURLQuery(r.URL.Query()),
+	)
 	if err != nil {
 		_ = render.Render(w, r, ErrInvalidRequest(err))
 	}
@@ -104,7 +106,6 @@ func (l *UserTuitHandler) SearchReplies(writer http.ResponseWriter, request *htt
 	}
 
 	page, err := strconv.Atoi(request.URL.Query().Get("page"))
-
 	if err != nil {
 		l.logger.Printf(request.Context(), "syserror rendering invalid request: %v", err)
 
@@ -120,7 +121,6 @@ func (l *UserTuitHandler) SearchReplies(writer http.ResponseWriter, request *htt
 	}
 
 	claims, err := l.claimsExtractor.ExtractClaims(token)
-
 	if err != nil {
 		_ = render.Render(writer, request, ErrInvalidRequest(err))
 
@@ -130,7 +130,6 @@ func (l *UserTuitHandler) SearchReplies(writer http.ResponseWriter, request *htt
 	userID := uint(claims["sub"].(float64))
 
 	userPosts, err := l.useCases.PaginateReplies(request.Context(), userID, uTuitID, page)
-
 	if err != nil {
 		_ = render.Render(writer, request, ErrInvalidRequest(err))
 	}
@@ -151,8 +150,6 @@ func (u *userPostPayload) Bind(_ *http.Request) error {
 }
 
 func (u *userPostPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
-	u.Liked = u.TuitPost.Liked
-
 	return nil
 }
 

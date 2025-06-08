@@ -11,8 +11,7 @@ func NewFileServer() *FileServer {
 	return &FileServer{}
 }
 
-type FileServer struct {
-}
+type FileServer struct{}
 
 // FileRoutes conveniently sets up a http.FileServer handler to serve
 // static files from a http.FileSystem.
