@@ -16,8 +16,7 @@ type AddAvatarUseCase interface {
 	New(userName string) string
 }
 
-type Service struct {
-}
+type Service struct{}
 
 func (c *Service) New(userName string) string {
 	return avatarURL + userName

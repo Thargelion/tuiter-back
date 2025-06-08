@@ -50,7 +50,6 @@ func (m *MockRouter) FillMockData(responseWriter http.ResponseWriter, request *h
 	}
 
 	err = render.Render(responseWriter, request, newResponse(http.StatusOK, "Mock data created"))
-
 	if err != nil {
 		responseWriter.WriteHeader(http.StatusOK)
 	}
