@@ -20,18 +20,27 @@ type User struct {
 	Password  string `json:"password"`
 }
 
+// SecureUser will generate an encrypted password. Will remain empty if
+// user has no password at all
 func (u *User) SecureUser() (*User, error) {
-	binaryPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("syserror hashing password: %w", err)
+	var pass string
+	if u.Password != "" {
+		binaryPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, fmt.Errorf("syserror hashing password: %w", err)
+		}
+		pass = string(binaryPassword)
+	} else {
+		pass = u.Password
 	}
+
 
 	return &User{
 		ID:        u.ID,
 		Name:      u.Name,
 		Email:     u.Email,
 		AvatarURL: u.AvatarURL,
-		Password:  string(binaryPassword),
+		Password:  pass,
 	}, nil
 }
 

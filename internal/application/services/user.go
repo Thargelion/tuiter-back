@@ -51,17 +51,17 @@ func (c *Service) Update(ctx context.Context, u *user.User) (*user.User, error) 
 		return nil, fmt.Errorf("syserror searching for a user on repository: %w", err)
 	}
 
-	if u.Password == "" {
-		// Business Rule: Password is not required for update
-		u.Password = oldUser.Password
-	}
-
 	// Business Rule: User can't change email
 	u.Email = oldUser.Email
 	u.ID = oldUser.ID
 	securedUser, err := u.SecureUser()
 	if err != nil {
 		return nil, err
+	}
+
+	if securedUser.Password == "" {
+		// Business Rule: Password is not required for update
+		securedUser.Password = oldUser.Password
 	}
 
 	updatedUser, err := c.userRepo.Update(ctx, securedUser)
