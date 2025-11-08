@@ -123,12 +123,7 @@ func (u FeedRepository) SearchByPage(
 			"t.parent_id IS NULL",
 		)
 	}
-	q = q.OrderBy(
-		"t.created_at desc",
-	).Paginated(
-		postsPerPage,
-		offset,
-	)
+	q = q.OrderBy("t.created_at desc").Paginated(postsPerPage, offset)
 	txResult := u.dbEngine.Raw(
 		string(q),
 		userID,
