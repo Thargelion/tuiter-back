@@ -34,7 +34,6 @@ func (u *User) SecureUser() (*User, error) {
 		pass = u.Password
 	}
 
-
 	return &User{
 		ID:        u.ID,
 		Name:      u.Name,
