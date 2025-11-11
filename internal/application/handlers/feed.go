@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -26,6 +27,8 @@ func NewUserTuitHandler(
 		logger:          logger,
 	}
 }
+
+var errNoToken = errors.New("no user token provided")
 
 type UserTuitHandler struct {
 	useCases        tuitpost.UseCases
@@ -58,7 +61,7 @@ func (l *UserTuitHandler) Search(w http.ResponseWriter, r *http.Request) {
 	token, ok := r.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
-		_ = render.Render(w, r, ErrInvalidRequest(err))
+		_ = render.Render(w, r, ErrInvalidRequest(errNoToken))
 
 		return
 	}
@@ -115,7 +118,7 @@ func (l *UserTuitHandler) SearchReplies(writer http.ResponseWriter, request *htt
 	token, ok := request.Context().Value(security.TokenMan).(*jwt.Token)
 
 	if !ok {
-		_ = render.Render(writer, request, ErrInvalidRequest(err))
+		_ = render.Render(writer, request, ErrInvalidRequest(errNoToken))
 
 		return
 	}
@@ -154,7 +157,7 @@ func (u *userPostPayload) Render(_ http.ResponseWriter, _ *http.Request) error {
 }
 
 func newUserPostList(posts []*tuitpost.TuitPost) []render.Renderer {
-	list := []render.Renderer{}
+	var list []render.Renderer
 
 	for _, userPost := range posts {
 		list = append(list, &userPostPayload{userPost})

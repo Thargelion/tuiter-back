@@ -13,8 +13,9 @@ import (
 
 const (
 	postsPerPage              = 20
+
 	projectedPostPartialQuery = `
-	SELECT t.id as id, parent_id, message, u.name as author, u.avatar_url, pl.user_entity_id IS NOT NULL as liked , 
+	SELECT t.id as id, parent_id, message, u.id as author_id, u.name as author, u.avatar_url, pl.user_entity_id IS NOT NULL as liked , 
 	       likes, t.created_at as date 
 		FROM tuits as t
 		    LEFT JOIN (SELECT user_entity_id, tuit_entity_id FROM tuit_likes) pl 
