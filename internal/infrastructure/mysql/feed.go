@@ -13,6 +13,7 @@ import (
 
 const (
 	postsPerPage              = 20
+
 	projectedPostPartialQuery = `
 	SELECT t.id as id, parent_id, message, u.id as author_id, u.name as author, u.avatar_url, pl.user_entity_id IS NOT NULL as liked , 
 	       likes, t.created_at as date 
