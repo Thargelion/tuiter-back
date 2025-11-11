@@ -6,6 +6,7 @@ type TuitPost struct {
 	ID        int    `json:"id"`
 	Message   string `json:"message"`
 	ParentID  int    `json:"parent_id"`
+	AuthorID  int    `json:"author_id"`
 	Author    string `json:"author"`
 	AvatarURL string `json:"avatar_url"`
 	Likes     int    `json:"likes"`
