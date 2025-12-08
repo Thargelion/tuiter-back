@@ -53,7 +53,7 @@ func main() {
 	chiRouter.Use(middleware.Recoverer)
 	chiRouter.Use(middleware.Timeout(timeout))
 	chiRouter.Use(handlers.RequestTagger)
-	chiRouter.Use(handlers.ApiValidation)
+	// chiRouter.Use(handlers.ApiValidation)
 	chiRouter.Use(middleware.Logger)
 
 	workDir, _ := os.Getwd()
@@ -61,7 +61,7 @@ func main() {
 
 	// Security
 	tokenValidator := security.NewJWTHandler(expiration, []byte(secret), tuiterTime)
-	securityMiddleware := security.NewAuthenticatorMiddleware(tokenValidator)
+	// securityMiddleware := security.NewAuthenticatorMiddleware(tokenValidator)
 	// Add Globals
 	// Basic CORS
 	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
@@ -142,7 +142,7 @@ func main() {
 	likesRouter := router.NewLikeRouter(likeHandler)
 
 	usersRouter := chi.NewRouter()
-	usersRouter.Use(securityMiddleware.Middleware)
+	// usersRouter.Use(securityMiddleware.Middleware)
 	usersRouter.Route("/tuits", tuitRouter.Route)
 	usersRouter.Route("/me", func(router chi.Router) {
 		router.Route("/", userRouter.Route)
