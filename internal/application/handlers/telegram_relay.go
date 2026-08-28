@@ -43,7 +43,11 @@ func (t *TelegramRelay) Relay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ponytail: empty configured secret must never match an empty header.
-	if t.secret == "" || subtle.ConstantTimeCompare([]byte(r.Header.Get(telegramSecretHeader)), []byte(t.secret)) != 1 {
+	secretMatches := subtle.ConstantTimeCompare(
+		[]byte(r.Header.Get(telegramSecretHeader)),
+		[]byte(t.secret),
+	) == 1
+	if t.secret == "" || !secretMatches {
 		w.WriteHeader(http.StatusUnauthorized)
 
 		return
@@ -84,7 +88,7 @@ func (t *TelegramRelay) Relay(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	_, _ = io.Copy(io.Discard, resp.Body)
 
