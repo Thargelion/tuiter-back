@@ -34,6 +34,8 @@ type TelegramRelay struct {
 }
 
 func (t *TelegramRelay) Relay(w http.ResponseWriter, r *http.Request) {
+	// Defense-in-depth: chi only mounts Relay via .Post today, but this
+	// keeps the handler safe if it's ever rewired to a non-method-scoped route.
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 
@@ -64,6 +66,7 @@ func (t *TelegramRelay) Relay(w http.ResponseWriter, r *http.Request) {
 
 	upstreamReq, err := http.NewRequestWithContext(r.Context(), http.MethodPost, t.upstreamURL, bytes.NewReader(body))
 	if err != nil {
+		t.logger.Printf(r.Context(), "telegram relay build error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return

@@ -28,6 +28,7 @@ const (
 	corsMaxAge        = 300
 	timeout           = 5 * time.Second
 	readHeaderTimeout = 3 * time.Second
+	serverReadTimeout = 15 * time.Second
 	tokenTimeoutHours = 24
 	tokenTimeoutDays  = 30
 )
@@ -56,7 +57,7 @@ func main() {
 
 	// The application router carries the timeout/validation/CORS stack that
 	// doesn't fit the Telegram webhook (long-lived upstream call, no CORS/JWT).
-	appRouter := chi.NewRouter()
+	appRouter := chiRouter.Group(nil)
 	appRouter.Use(middleware.Timeout(timeout))
 	appRouter.Use(handlers.ApiValidation)
 
@@ -102,7 +103,8 @@ func main() {
 		os.Getenv("ASTRAL_TELEGRAM_WEBHOOK_URL"),
 		logger,
 	)
-	chiRouter.Post("/v1/telegram/webhook", telegramRelay.Relay)
+	telegramRouter := router.NewTelegramRouter(telegramRelay)
+	chiRouter.Route("/v1/telegram/webhook", telegramRouter.Route)
 
 	// Security
 
@@ -166,11 +168,10 @@ func main() {
 		router.Route("/users", publicUserRouter.Route)
 		router.Mount("/", usersRouter)
 	})
-	chiRouter.Mount("/", appRouter)
-
 	server := &http.Server{
 		Addr:              addr,
 		ReadHeaderTimeout: readHeaderTimeout,
+		ReadTimeout:       serverReadTimeout,
 		Handler:           chiRouter,
 	}
 
