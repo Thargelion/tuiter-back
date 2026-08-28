@@ -49,12 +49,16 @@ func main() {
 	// JWT
 	secret := os.Getenv("JWT_SECRET")
 	expiration := time.Hour * tokenTimeoutHours * tokenTimeoutDays // 30 days
-	// Configure Chi
+	// Configure Chi (common middleware, applies to the Telegram webhook too)
 	chiRouter.Use(middleware.Recoverer)
-	chiRouter.Use(middleware.Timeout(timeout))
 	chiRouter.Use(handlers.RequestTagger)
-	chiRouter.Use(handlers.ApiValidation)
 	chiRouter.Use(middleware.Logger)
+
+	// The application router carries the timeout/validation/CORS stack that
+	// doesn't fit the Telegram webhook (long-lived upstream call, no CORS/JWT).
+	appRouter := chi.NewRouter()
+	appRouter.Use(middleware.Timeout(timeout))
+	appRouter.Use(handlers.ApiValidation)
 
 	workDir, _ := os.Getwd()
 	filesDir := http.Dir(filepath.Join(workDir, "data"))
@@ -65,7 +69,7 @@ func main() {
 	// Add Globals
 	// Basic CORS
 	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
-	chiRouter.Use(cors.Handler(cors.Options{
+	appRouter.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
@@ -75,15 +79,15 @@ func main() {
 		AllowCredentials: false,
 		MaxAge:           corsMaxAge, // Maximum value not ignored by any of major browsers
 	}))
-	chiRouter.Get("/ping", func(w http.ResponseWriter, _ *http.Request) {
+	appRouter.Get("/ping", func(w http.ResponseWriter, _ *http.Request) {
 		handlers.LogWriter{ResponseWriter: w}.Write([]byte("Hello World!"))
 	})
-	chiRouter.Get("/swagger/*", httpSwagger.Handler(
+	appRouter.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"), // The url pointing to API definition
 	))
 
 	fileServerRouter := router.NewFileServer()
-	fileServerRouter.FileRoutes(chiRouter, "/files", filesDir)
+	fileServerRouter.FileRoutes(appRouter, "/files", filesDir)
 
 	dbUser := os.Getenv("MYSQL_USER")
 	dbPass := os.Getenv("MYSQL_PASS")
@@ -91,6 +95,14 @@ func main() {
 	dbName := os.Getenv("MYSQL_DB")
 	dataBase := mysql.Connect(dbUser, dbPass, dbHost, dbName)
 	logger := logging.NewContextualLogger(log.Default())
+
+	// Telegram webhook: own secret-header auth, no JWT/CORS/5s timeout.
+	telegramRelay := handlers.NewTelegramRelay(
+		os.Getenv("TELEGRAM_WEBHOOK_SECRET"),
+		os.Getenv("ASTRAL_TELEGRAM_WEBHOOK_URL"),
+		logger,
+	)
+	chiRouter.Post("/v1/telegram/webhook", telegramRelay.Relay)
 
 	// Security
 
@@ -149,11 +161,12 @@ func main() {
 		router.Route("/tuits/{id}/likes", likesRouter.Route)
 		router.Route("/tuits", tuitRouter.Route)
 	})
-	chiRouter.Route("/v1", func(router chi.Router) {
+	appRouter.Route("/v1", func(router chi.Router) {
 		router.Route("/login", loginRouter.Route)
 		router.Route("/users", publicUserRouter.Route)
 		router.Mount("/", usersRouter)
 	})
+	chiRouter.Mount("/", appRouter)
 
 	server := &http.Server{
 		Addr:              addr,
