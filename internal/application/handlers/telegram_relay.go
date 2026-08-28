@@ -68,7 +68,12 @@ func (t *TelegramRelay) Relay(w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
 
-	upstreamReq, err := http.NewRequestWithContext(r.Context(), http.MethodPost, t.upstreamURL, bytes.NewReader(body))
+	upstreamReq, err := http.NewRequestWithContext(
+		r.Context(),
+		http.MethodPost,
+		t.upstreamURL,
+		bytes.NewReader(body),
+	)
 	if err != nil {
 		t.logger.Printf(r.Context(), "telegram relay build error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -83,7 +88,12 @@ func (t *TelegramRelay) Relay(w http.ResponseWriter, r *http.Request) {
 	duration := time.Since(start)
 
 	if err != nil {
-		t.logger.Printf(r.Context(), "telegram relay upstream error status=%d duration=%s", http.StatusBadGateway, duration)
+		t.logger.Printf(
+			r.Context(),
+			"telegram relay upstream error status=%d duration=%s",
+			http.StatusBadGateway,
+			duration,
+		)
 		w.WriteHeader(http.StatusBadGateway)
 
 		return
