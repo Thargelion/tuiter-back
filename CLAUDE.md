@@ -28,7 +28,7 @@ go test -run TestName ./path/to/package   # single test
 make docs.generate
 ```
 
-There are currently no `*_test.go` files in the repo — CI (`go-test.yml`) still runs `go build ./...` and `go test ./...` on every PR to `main`/`develop`/`releases/**`, and `go-lint.yml` runs golangci-lint v2.6 the same way. Match those on any change.
+CI (`go-test.yml`) runs `go build ./...` and `go test ./...` on every PR to `main`/`develop`/`releases/**`, and `go-lint.yml` runs golangci-lint v2.6 the same way. Match those on any change.
 
 ## Architecture
 
@@ -44,7 +44,9 @@ Package-oriented design with inbound/outbound ports split across layers:
 
 ### Request flow
 
-`chiRouter` → global middleware (recoverer, timeout, request tagger, API validation, request logger, CORS) → `/v1` routes. Public routes: `/login`, `/users`. Everything else is mounted under a sub-router guarded by `securityMiddleware.Middleware` (JWT auth via `pkg/security`), which puts the validated token in the request context under `security.TokenMan` for handlers to read.
+`chiRouter` (root) carries only common middleware — recoverer, request tagger, request logger — and two things: `POST /v1/telegram/webhook` (relayed straight to the handler, no timeout/CORS/JWT — see below) and a mounted `appRouter` at `/`. `appRouter` carries the timeout, API validation, and CORS middleware and holds `/ping`, `/swagger`, `/files`, and `/v1` routes. Public `/v1` routes: `/login`, `/users`. Everything else under `/v1` is mounted under a sub-router guarded by `securityMiddleware.Middleware` (JWT auth via `pkg/security`), which puts the validated token in the request context under `security.TokenMan` for handlers to read.
+
+The Telegram webhook (`internal/application/handlers/telegram_relay.go`) sits outside `appRouter` on purpose: it authenticates via a constant-time comparison against `TELEGRAM_WEBHOOK_SECRET` (Telegram's own secret header) instead of JWT, and forwards the raw update body to `ASTRAL_TELEGRAM_WEBHOOK_URL` with its own bounded HTTP client timeout rather than the 5s middleware timeout.
 
 ### Error handling
 
