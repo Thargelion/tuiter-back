@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"os"
 
 	"github.com/google/uuid"
-	"golang.org/x/net/context"
 )
 
 type uuidKey int
