@@ -26,3 +26,5 @@ out
 
 # DDBB Local Volume
 database_DATA
+
+graphify-out/
